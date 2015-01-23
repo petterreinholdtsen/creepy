@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import os
-from PyQt4.QtGui import QWizard,QMessageBox,QWidget,QScrollArea,QLineEdit,QLabel,QVBoxLayout,QCheckBox,QGridLayout
+from PyQt4.QtGui import QWizard, QMessageBox, QWidget, QScrollArea, QLineEdit, QLabel, QVBoxLayout, QCheckBox, \
+    QGridLayout
 from PyQt4.QtCore import QString
 from models.PluginConfigurationListModel import PluginConfigurationListModel
 from models.ProjectWizardPossibleTargetsTable import ProjectWizardPossibleTargetsTable
@@ -17,6 +18,7 @@ except AttributeError:
 
 class PersonProjectWizard(QWizard):
     """ Loads the Person Based Project Wizard from the ui and shows it """
+
     def __init__(self, parent=None):
         QWizard.__init__(self, parent)
         self.ui = Ui_personProjectWizard()
@@ -25,11 +27,11 @@ class PersonProjectWizard(QWizard):
         self.enabledPlugins = []
         # Register the project name field so that it will become mandatory
         self.page(0).registerField('name*', self.ui.personProjectNameValue)
-        
+
         self.ui.btnAddTarget.clicked.connect(self.addTargetsToSelected)
         self.ui.btnRemoveTarget.clicked.connect(self.removeTargetsFromSelected)
         self.ui.personProjectSearchForValue.returnPressed.connect(self.ui.personProjectSearchButton.setFocus)
-        
+
     def addTargetsToSelected(self):
         selected = self.ui.personProjectSearchResultsTable.selectionModel().selectedRows()
         newTargets = [self.ui.personProjectSearchResultsTable.model().targets[i.row()] for i in selected]
@@ -39,9 +41,10 @@ class PersonProjectWizard(QWizard):
         selected = self.ui.personProjectSelectedTargetsTable.selectionModel().selectedRows()
         toRemove = [self.ui.personProjectSelectedTargetsTable.model().targets[i.row()] for i in selected]
         self.ui.personProjectSelectedTargetsTable.model().removeRows(toRemove, len(toRemove))
+
     def showWarning(self, title, text):
         QMessageBox.warning(self, title, text)
-        
+
     def initializePage(self, i):
         """
         If the page to be loaded is the page containing the search
@@ -55,25 +58,26 @@ class PersonProjectWizard(QWizard):
             self.checkIfSelectedTargets()
             self.storeSelectedTargets()
             self.showPluginsSearchOptions()
-            
-        
+
+
     def checkIfSelectedTargets(self):
         if not self.ProjectWizardSelectedTargetsTable.targets:
-            self.showWarning('No target selected', 'Please drag and drop your targets to the selected targets before proceeding')
+            self.showWarning('No target selected',
+                             'Please drag and drop your targets to the selected targets before proceeding')
             self.back()
             self.next()
-    
+
     def storeSelectedTargets(self):
         '''
         Stores a list of the selected targets for future use
         '''
         self.selectedTargets = []
         for target in self.ProjectWizardSelectedTargetsTable.targets:
-            self.selectedTargets.append({'pluginName':target['pluginName'],
-                                         'targetUsername':target['targetUsername'],
-                                         'targetUserid':target['targetUserid'],
-                                         'targetFullname':target['targetFullname']
-                                         })
+            self.selectedTargets.append({'pluginName': target['pluginName'],
+                                         'targetUsername': target['targetUsername'],
+                                         'targetUserid': target['targetUserid'],
+                                         'targetFullname': target['targetFullname']
+            })
 
     def searchForTargets(self):
         '''
@@ -87,37 +91,39 @@ class PersonProjectWizard(QWizard):
             selectedPlugins = list(self.ProjectWizardPluginListModel.checkedPlugins)
             possibleTargets = []
             for i in selectedPlugins:
-                pluginTargets = self.PluginManager.getPluginByName(i, 'Input').plugin_object.searchForTargets(search_term)
-                
+                pluginTargets = self.PluginManager.getPluginByName(i, 'Input').plugin_object.searchForTargets(
+                    search_term)
+
                 if pluginTargets:
                     possibleTargets.extend(pluginTargets)
             self.ProjectWizardPossibleTargetsTable = ProjectWizardPossibleTargetsTable(possibleTargets, self)
             self.ui.personProjectSearchResultsTable.setModel(self.ProjectWizardPossibleTargetsTable)
             self.ui.personProjectSelectedTargetsTable.setModel(self.ProjectWizardSelectedTargetsTable)
-            
-    
+
+
     def loadConfiguredPlugins(self):
         '''
         Returns a list with the configured plugins that can be used
         '''
         self.PluginManager = PluginManagerSingleton.get()
-        self.PluginManager.setCategoriesFilter({ 'Input': InputPlugin})
+        self.PluginManager.setCategoriesFilter({'Input': InputPlugin})
         self.PluginManager.setPluginPlaces([os.path.join(os.getcwdu(), 'plugins')])
         self.PluginManager.locatePlugins()
         self.PluginManager.loadPlugins()
         pluginList = sorted(self.PluginManager.getAllPlugins(), key=lambda x: x.name)
-        return [[plugin, 0] for plugin in pluginList ]
-    
+        return [[plugin, 0] for plugin in pluginList]
+
     def getNameForConfigurationOption(self, key):
         pass
-            
+
     def showPluginsSearchOptions(self):
         '''
         Loads the search options of all the selected plugins and populates the relevant UI elements
         with input fields for the string options and checkboxes for the boolean options
         '''
         pl = []
-        for pluginName in list(set([target['pluginName'] for target in self.ProjectWizardSelectedTargetsTable.targets])):
+        for pluginName in list(
+                set([target['pluginName'] for target in self.ProjectWizardSelectedTargetsTable.targets])):
             plugin = self.PluginManager.getPluginByName(pluginName, 'Input')
             self.enabledPlugins.append(plugin)
             pl.append(plugin)
@@ -131,7 +137,7 @@ class PersonProjectWizard(QWizard):
             scroll.setWidgetResizable(True)
             layout = QVBoxLayout()
             titleLabel = QLabel(_fromUtf8(plugin.name + self.trUtf8(' Search Options')))
-            layout.addWidget(titleLabel)    
+            layout.addWidget(titleLabel)
             vboxWidget = QWidget()
             vboxWidget.setObjectName(_fromUtf8('searchconfig_vboxwidget_container_' + plugin.name))
             vbox = QGridLayout()
@@ -165,23 +171,22 @@ class PersonProjectWizard(QWizard):
                     if pluginBooleanOptions[item] == 'True':
                         cb.toggle()
                     vbox.addWidget(cb, gridLayoutRowIndex + idx, 0)
-            #If there are no search options just show a message 
+            # If there are no search options just show a message
             if not pluginBooleanOptions and not pluginStringOptions:
                 label = QLabel()
                 label.setObjectName(_fromUtf8('no_search_config_options'))
                 label.setText(self.trUtf8('This plugin does not offer any search options.'))
-                vbox.addWidget(label,0,0)
-            
+                vbox.addWidget(label, 0, 0)
+
             vboxWidget.setLayout(vbox)
             scroll.setWidget(vboxWidget)
             layout.addWidget(scroll)
             layout.addStretch(1)
             page.setLayout(layout)
             self.ui.searchConfiguration.addWidget(page)
-            
-            
-        self.ui.searchConfiguration.setCurrentIndex(0)   
-            
+
+        self.ui.searchConfiguration.setCurrentIndex(0)
+
         self.SearchConfigPluginConfigurationListModel = PluginConfigurationListModel(pl, self)
         self.SearchConfigPluginConfigurationListModel.checkPluginConfiguration()
         self.ui.personProjectWizardSearchConfigPluginsList.setModel(self.SearchConfigPluginConfigurationListModel)
@@ -193,25 +198,28 @@ class PersonProjectWizard(QWizard):
         Called when the user clicks on a plugin in the list of the PluginConfiguration. This shows
         the relevant page with that plugin's configuration options
         '''
-        self.ui.searchConfiguration.setCurrentIndex(modelIndex.row())   
-        
-    def readSearchConfiguration(self):  
+        self.ui.searchConfiguration.setCurrentIndex(modelIndex.row())
+
+    def readSearchConfiguration(self):
         '''
         Reads all the search configuration options for the enabled plugins and and returns a list of the enabled plugins and their options.
-        ''' 
+        '''
         enabledPlugins = []
         pages = (self.ui.searchConfiguration.widget(i) for i in range(self.ui.searchConfiguration.count()))
         for page in pages:
-            for widg in [ scrollarea.children() for scrollarea in page.children() if type(scrollarea) == QScrollArea]:
+            for widg in [scrollarea.children() for scrollarea in page.children() if type(scrollarea) == QScrollArea]:
                 for i in widg[0].children():
                     plugin_name = str(i.objectName().replace('searchconfig_vboxwidget_container_', ''))
                     string_options = {}
                     for j in i.findChildren(QLabel):
                         if str(j.text()).startswith('searchconfig'):
-                            string_options[str(j.objectName().replace('searchconfig_string_label_', ''))] = str(i.findChild(QLineEdit, j.objectName().replace('label', 'value')).text())
-                    boolean_options = {}    
+                            string_options[str(j.objectName().replace('searchconfig_string_label_', ''))] = str(
+                                i.findChild(QLineEdit, j.objectName().replace('label', 'value')).text())
+                    boolean_options = {}
                     for k in i.findChildren(QCheckBox):
-                        boolean_options[str(k.objectName().replace('searchconfig_boolean_label_', ''))] = str(k.isChecked())  
-                    
-            enabledPlugins.append({'pluginName':plugin_name, 'searchOptions':{'string':string_options, 'boolean':boolean_options}})       
+                        boolean_options[str(k.objectName().replace('searchconfig_boolean_label_', ''))] = str(
+                            k.isChecked())
+
+            enabledPlugins.append(
+                {'pluginName': plugin_name, 'searchOptions': {'string': string_options, 'boolean': boolean_options}})
         return enabledPlugins

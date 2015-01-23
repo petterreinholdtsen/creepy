@@ -14,7 +14,7 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 
 class Project(object):
-    def __init__(self, projectName = None, selectedTargets=None, projectKeywords = None, projectDescription = None, enabledPlugins = None,dateCreated = None, locations = None, analysis=None, dateEdited=None, results=None, viewSettings = None):
+    def __init__(self, projectName = None, selectedTargets=None, projectKeywords = None, projectDescription = None, enabledPlugins = None,dateCreated = None, locations=None, analysis=None, analysisDocument=None, dateEdited=None, results=None, viewSettings = None):
         self.projectName= projectName
         self.selectedTargets = selectedTargets
         self.projectKeywords = projectKeywords
@@ -26,6 +26,7 @@ class Project(object):
         self.analysis = analysis
         self.viewSettings = viewSettings
         self.isAnalysisRunning = False
+
         
     def storeProject(self, projectNodeObject):
         '''

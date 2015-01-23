@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>FilterLocationsDateDialog</class>
- <widget class="QDialog" name="FilterLocationsDateDialog">
+ <class>compareProjectsDialog</class>
+ <widget class="QDialog" name="compareProjectsDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Filter Locations By Date</string>
+   <string>Compare Projects</string>
   </property>
   <property name="windowIcon">
    <iconset>
@@ -32,18 +32,18 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Select the start and end dates and times ( &lt;/span&gt;&lt;span style=&quot; font-size:9pt; color:#ff0000;&quot;&gt;Note&lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt; that the selected dates are &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-weight:600;&quot;&gt;UTC&lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt; ! )&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Select the two projects you want to compare&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="calendarContainerLayout">
+      <layout class="QHBoxLayout" name="projectsSelectionContainerLayout">
        <item>
-        <layout class="QVBoxLayout" name="startDateContainer">
+        <layout class="QVBoxLayout" name="firstProjectContainer">
          <item>
-          <widget class="QLabel" name="startDateLabel">
+          <widget class="QLabel" name="firstProjectLabel">
            <property name="text">
-            <string>&lt;b&gt;Start Date&lt;/b&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Project A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="textFormat">
             <enum>Qt::AutoText</enum>
@@ -51,37 +51,23 @@
           </widget>
          </item>
          <item>
-          <widget class="QCalendarWidget" name="stardateCalendarWidget"/>
+          <widget class="QListWidget" name="firstProjectListWidget"/>
          </item>
         </layout>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="endDateContainer">
+        <layout class="QVBoxLayout" name="secondProjectContainer">
          <item>
-          <widget class="QLabel" name="endDateLabel">
+          <widget class="QLabel" name="secondProjectLabel">
            <property name="text">
-            <string>&lt;b&gt;End Date&lt;/b&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Project B&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QCalendarWidget" name="endDateCalendarWidget"/>
+          <widget class="QListWidget" name="secondProjectListWidget"/>
          </item>
         </layout>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="timeContainerLayout">
-       <item>
-        <widget class="QTimeEdit" name="startDateTimeEdit">
-         <property name="displayFormat">
-          <string>hh:mm:ss AP</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QTimeEdit" name="endDateTimeEdit"/>
        </item>
       </layout>
      </item>
@@ -106,7 +92,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>FilterLocationsDateDialog</receiver>
+   <receiver>compareProjectsDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -122,7 +108,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>FilterLocationsDateDialog</receiver>
+   <receiver>compareProjectsDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

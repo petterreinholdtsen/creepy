@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1483</width>
-    <height>719</height>
+    <width>1473</width>
+    <height>862</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -57,11 +57,11 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
-         <widget class="QWebView" name="mapWebView">
+         <widget class="QWebView" name="mapWebView" native="true">
           <property name="autoFillBackground">
            <bool>true</bool>
           </property>
-          <property name="url">
+          <property name="url" stdset="0">
            <url>
             <string>about:blank</string>
            </url>
@@ -70,7 +70,13 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="analysisPage"/>
+      <widget class="QWidget" name="analysisPage">
+       <layout class="QVBoxLayout" name="verticalLayout_6">
+        <item>
+         <widget class="QWebView" name="analysisWebView" native="true"/>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -80,8 +86,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1483</width>
-     <height>21</height>
+     <width>1473</width>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuCreepy">
@@ -131,6 +137,7 @@
     <property name="title">
      <string>Filters</string>
     </property>
+    <addaction name="actionFilterLocationsCustom"/>
     <addaction name="actionFilterLocationsDate"/>
     <addaction name="actionFilterLocationsPosition"/>
     <addaction name="actionRemoveFilters"/>
@@ -384,6 +391,7 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionFilterLocationsCustom"/>
    <addaction name="actionFilterLocationsDate"/>
    <addaction name="actionFilterLocationsPosition"/>
    <addaction name="actionShowHeatMap"/>
@@ -395,7 +403,7 @@
    </property>
    <property name="icon">
     <iconset resource="../creepy/include/creepy_resources.qrc">
-     <normaloff>:/creepy/export</normaloff>:/creepy/export</iconset>
+     <normaloff>:/creepy/blue-document-export.png</normaloff>:/creepy/blue-document-export.png</iconset>
    </property>
    <property name="text">
     <string>Export Project Locations as KML</string>
@@ -407,7 +415,7 @@
   <action name="actionExportCSV">
    <property name="icon">
     <iconset resource="../creepy/include/creepy_resources.qrc">
-     <normaloff>:/creepy/export</normaloff>:/creepy/export</iconset>
+     <normaloff>:/creepy/blue-document-export.png</normaloff>:/creepy/blue-document-export.png</iconset>
    </property>
    <property name="text">
     <string>Export Project Locations as CSV</string>
@@ -419,7 +427,7 @@
   <action name="actionExit">
    <property name="icon">
     <iconset resource="../creepy/include/creepy_resources.qrc">
-     <normaloff>:/creepy/cross</normaloff>:/creepy/cross</iconset>
+     <normaloff>:/creepy/cross.png</normaloff>:/creepy/cross.png</iconset>
    </property>
    <property name="text">
     <string>Exit</string>
@@ -428,7 +436,7 @@
   <action name="actionReportProblem">
    <property name="icon">
     <iconset resource="../creepy/include/creepy_resources.qrc">
-     <normaloff>:/creepy/exclamation</normaloff>:/creepy/exclamation</iconset>
+     <normaloff>:/creepy/exclamation.png</normaloff>:/creepy/exclamation.png</iconset>
    </property>
    <property name="text">
     <string>Report a problem / bug</string>
@@ -446,7 +454,7 @@
   <action name="actionPluginsConfiguration">
    <property name="icon">
     <iconset resource="../creepy/include/creepy_resources.qrc">
-     <normaloff>:/creepy/properties</normaloff>:/creepy/properties</iconset>
+     <normaloff>:/creepy/application-sidebar-list.png</normaloff>:/creepy/application-sidebar-list.png</iconset>
    </property>
    <property name="text">
     <string>Plugins Configuration</string>
@@ -496,7 +504,7 @@
   <action name="actionNewPersonProject">
    <property name="icon">
     <iconset resource="../creepy/include/creepy_resources.qrc">
-     <normaloff>:/creepy/user</normaloff>:/creepy/user</iconset>
+     <normaloff>:/creepy/user.png</normaloff>:/creepy/user.png</iconset>
    </property>
    <property name="text">
     <string>Person Based Project</string>
@@ -509,7 +517,7 @@
   </action>
   <action name="actionAnalyzeCurrentProject">
    <property name="icon">
-    <iconset resource="../creepy/include/creepy_resources.qrc">
+    <iconset>
      <normaloff>:/creepy/target</normaloff>:/creepy/target</iconset>
    </property>
    <property name="text">
@@ -521,7 +529,7 @@
   </action>
   <action name="actionDrawCurrentProject">
    <property name="icon">
-    <iconset resource="../creepy/include/creepy_resources.qrc">
+    <iconset>
      <normaloff>:/creepy/map</normaloff>:/creepy/map</iconset>
    </property>
    <property name="text">
@@ -534,7 +542,7 @@
   <action name="actionFilterLocationsDate">
    <property name="icon">
     <iconset resource="../creepy/include/creepy_resources.qrc">
-     <normaloff>:/creepy/calendar</normaloff>:/creepy/calendar</iconset>
+     <normaloff>:/creepy/calendar-day.png</normaloff>:/creepy/calendar-day.png</iconset>
    </property>
    <property name="text">
     <string>Filter Locations by Date</string>
@@ -546,7 +554,7 @@
   <action name="actionFilterLocationsPosition">
    <property name="icon">
     <iconset resource="../creepy/include/creepy_resources.qrc">
-     <normaloff>:/creepy/marker</normaloff>:/creepy/marker</iconset>
+     <normaloff>:/creepy/marker.png</normaloff>:/creepy/marker.png</iconset>
    </property>
    <property name="text">
     <string>Filter Locations by Position</string>
@@ -557,7 +565,7 @@
   </action>
   <action name="actionRemoveFilters">
    <property name="icon">
-    <iconset resource="../creepy/include/creepy_resources.qrc">
+    <iconset>
      <normaloff>:/creepy/minus</normaloff>:/creepy/minus</iconset>
    </property>
    <property name="text">
@@ -573,7 +581,7 @@
    </property>
    <property name="icon">
     <iconset resource="../creepy/include/creepy_resources.qrc">
-     <normaloff>:/creepy/heatmap</normaloff>:/creepy/heatmap</iconset>
+     <normaloff>:/creepy/fire.png</normaloff>:/creepy/fire.png</iconset>
    </property>
    <property name="text">
     <string>Show HeatMap</string>
@@ -594,7 +602,7 @@
   </action>
   <action name="actionDeleteCurrentProject">
    <property name="icon">
-    <iconset resource="../creepy/include/creepy_resources.qrc">
+    <iconset>
      <normaloff>:/creepy/minus-circle</normaloff>:/creepy/minus-circle</iconset>
    </property>
    <property name="text">
@@ -607,7 +615,7 @@
   <action name="actionExportFilteredKML">
    <property name="icon">
     <iconset resource="../creepy/include/creepy_resources.qrc">
-     <normaloff>:/creepy/export</normaloff>:/creepy/export</iconset>
+     <normaloff>:/creepy/blue-document-export.png</normaloff>:/creepy/blue-document-export.png</iconset>
    </property>
    <property name="text">
     <string>Export Filtered Locations as KML</string>
@@ -619,7 +627,7 @@
   <action name="actionExportFilteredCSV">
    <property name="icon">
     <iconset resource="../creepy/include/creepy_resources.qrc">
-     <normaloff>:/creepy/export</normaloff>:/creepy/export</iconset>
+     <normaloff>:/creepy/blue-document-export.png</normaloff>:/creepy/blue-document-export.png</iconset>
    </property>
    <property name="text">
     <string>Export Filtered Locations as CSV</string>
@@ -630,7 +638,7 @@
   </action>
   <action name="actionReanalyzeCurrentProject">
    <property name="icon">
-    <iconset resource="../creepy/include/creepy_resources.qrc">
+    <iconset>
      <normaloff>:/creepy/target</normaloff>:/creepy/target</iconset>
    </property>
    <property name="text">
@@ -643,10 +651,27 @@
   <action name="actionCheckUpdates">
    <property name="icon">
     <iconset resource="../creepy/include/creepy_resources.qrc">
-     <normaloff>:/creepy/info</normaloff>:/creepy/info</iconset>
+     <normaloff>:/creepy/globe.png</normaloff>:/creepy/globe.png</iconset>
    </property>
    <property name="text">
     <string>Check for updates</string>
+   </property>
+  </action>
+  <action name="actionCompareProjects">
+   <property name="text">
+    <string>Compare Projects</string>
+   </property>
+   <property name="toolTip">
+    <string>Compare two projects</string>
+   </property>
+  </action>
+  <action name="actionFilterLocationsCustom">
+   <property name="icon">
+    <iconset resource="../creepy/include/creepy_resources.qrc">
+     <normaloff>:/creepy/counter.png</normaloff>:/creepy/counter.png</iconset>
+   </property>
+   <property name="text">
+    <string>Filter Locations ( Custom ) </string>
    </property>
   </action>
  </widget>

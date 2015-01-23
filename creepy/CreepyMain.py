@@ -1,19 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import codecs
 import sys
 import datetime
 import os
 import logging
 import shelve
 import functools
-import csv
 import urllib2
+import pytz
+from components import creepy_resources_compiled
 from distutils.version import StrictVersion
-from configobj import ConfigObj
 from PyQt4.QtCore import QString, QThread, SIGNAL, QUrl, QDateTime, QDate, QRect, Qt
-from PyQt4.QtGui import QMainWindow, QApplication, QMessageBox, QFileDialog, QWidget, QScrollArea, QVBoxLayout, QIcon, QPixmap
-from PyQt4.QtGui import QHBoxLayout, QLabel, QLineEdit, QCheckBox, QPushButton, QStackedWidget,QGridLayout, QMenu, QTableWidgetItem
-from PyQt4.QtWebKit import QWebPage
+from PyQt4.QtGui import QMainWindow, QApplication, QMessageBox, QFileDialog, QWidget, QScrollArea, QVBoxLayout, QIcon, QTableWidgetItem, QAbstractItemView
+from PyQt4.QtGui import QHBoxLayout, QLabel, QLineEdit, QCheckBox, QPushButton, QStackedWidget, QGridLayout, QMenu, QPixmap
+from PyQt4.QtWebKit import QWebPage, QWebSettings
+from dominate import document
 from ui.CreepyUI import Ui_CreepyMainWindow
 from yapsy.PluginManager import PluginManagerSingleton
 from models.LocationsList import LocationsTableModel
@@ -23,24 +25,26 @@ from models.PluginConfigurationListModel import PluginConfigurationListModel
 from models.ProjectWizardPluginListModel import ProjectWizardPluginListModel
 from models.ProjectWizardSelectedTargetsTable import ProjectWizardSelectedTargetsTable
 from models.InputPlugin import InputPlugin
-from models.ProjectTree import ProjectNode, LocationsNode, ProjectTreeModel,ProjectTreeNode
+from models.ProjectTree import ProjectNode, LocationsNode, ProjectTreeModel, ProjectTreeNode, AnalysisNode
 from components.PersonProjectWizard import PersonProjectWizard
 from components.PluginsConfigurationDialog import PluginsConfigurationDialog
 from components.FilterLocationsDateDialog import FilterLocationsDateDialog
 from components.FilterLocationsPointDialog import FilterLocationsPointDialog
+from components.FilterLocationsCustomDialog import FilterLocationsCustomDialog
 from components.AboutDialog import AboutDialog
 from components.VerifyDeleteDialog import VerifyDeleteDialog
 from components.UpdateCheckDialog import UpdateCheckDialog
 from utilities import GeneralUtilities
+from dominate.tags import *
 # set up logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler(os.path.join(os.getcwd(),'creepy_main.log'))
+fh = logging.FileHandler(os.path.join(os.getcwd(), 'creepy_main.log'))
 fh.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter('%(levelname)s:%(asctime)s  In %(filename)s:%(lineno)d: %(message)s')
 fh.setFormatter(formatter)
 logger.addHandler(fh)
-#Capture stderr and stdout to a file
+# Capture stderr and stdout to a file
 sys.stdout = open(os.path.join(os.getcwd(),'creepy_stdout.log'), 'w')
 sys.stderr = open(os.path.join(os.getcwd(),'creepy_stderr.log'), 'w')
 try:
@@ -48,26 +52,36 @@ try:
 except AttributeError:
     _fromUtf8 = lambda s: s
 
-                       
+
 class MainWindow(QMainWindow):
-    
-    class analyzeProjectThread(QThread):
+    class AnalyzeProjectThread(QThread):
         def __init__(self, project):
             QThread.__init__(self)
             self.project = project
+
         def run(self):
             pluginManager = PluginManagerSingleton.get()
-            pluginManager.setCategoriesFilter({ 'Input': InputPlugin})
+            pluginManager.setCategoriesFilter({'Input': InputPlugin})
             pluginManager.setPluginPlaces([os.path.join(os.getcwd(), 'plugins')])
             pluginManager.locatePlugins()
             pluginManager.loadPlugins()
             locationsList = []
+            analysisDocument = document()
+            analysisDocument.add(link(rel='stylesheet', href='http://yui.yahooapis.com/pure/0.5.0/pure-min.css'))
+            menuDiv = div(id='menu', cls='pure-menu pure-menu-open pure-menu-horizontal')
+            menuDivList = ul()
+            for target in self.project.selectedTargets:
+                menuDivList += li(a(str(target['pluginName']), href='#'+str(target['pluginName'])), __inline=True)
+                menuDiv.add(menuDivList)
+            analysisDocument.add(menuDiv)
             for target in self.project.selectedTargets:
                 pluginObject = pluginManager.getPluginByName(target['pluginName'], 'Input').plugin_object
                 for pl in self.project.enabledPlugins:
                     if pl['pluginName'] == target['pluginName']:
-                        runtimeConfig = pl['searchOptions'] 
-                targetLocations = pluginObject.returnLocations(target, runtimeConfig)
+                        runtimeConfig = pl['searchOptions']
+                targetLocations, targetAnalysisDiv = pluginObject.returnAnalysis(target, runtimeConfig)
+                if targetAnalysisDiv:
+                    analysisDocument += targetAnalysisDiv
                 if targetLocations:
                     for loc in targetLocations:
                         location = Location()
@@ -81,12 +95,15 @@ class MainWindow(QMainWindow):
                         location.updateId()
                         location.visible = True
                         locationsList.append(location)
-            # remove duplicates if any
+            # remove duplicates locations if any
             for l in locationsList:
                 if l.id not in [loc.id for loc in self.project.locations]:
                     self.project.locations.append(l)
             # sort on date 
-            self.project.locations.sort(key=lambda x: x.datetime, reverse=True)                   
+            self.project.locations.sort(key=lambda x: x.datetime, reverse=True)
+            #Add analysis document on project
+
+            self.project.analysisDocument = analysisDocument
             self.emit(SIGNAL('locations(PyQt_PyObject)'), self.project)
 
     def __init__(self, parent=None):
@@ -95,23 +112,27 @@ class MainWindow(QMainWindow):
         self.ui = Ui_CreepyMainWindow()
         self.ui.setupUi(self)
         #Create folders for projects and temp if they do not exist
-        if not os.path.exists(os.path.join(os.getcwd(),'projects')):
-            os.makedirs(os.path.join(os.getcwd(),'projects'))
-        if not os.path.exists(os.path.join(os.getcwd(),'temp')):
-            os.makedirs(os.path.join(os.getcwd(),'temp'))
+        if not os.path.exists(os.path.join(os.getcwd(), 'projects')):
+            os.makedirs(os.path.join(os.getcwd(), 'projects'))
+        if not os.path.exists(os.path.join(os.getcwd(), 'temp')):
+            os.makedirs(os.path.join(os.getcwd(), 'temp'))
         self.projectsList = []
         self.currentProject = None
-        self.ui.webPage = QWebPage()
-        self.ui.webPage.mainFrame().setUrl(QUrl(os.path.join(os.getcwd(), 'include', 'map.html')))
-        self.ui.mapWebView.setPage(self.ui.webPage)
+        self.ui.mapWebPage = QWebPage()
+        self.ui.mapWebPage.mainFrame().setUrl(QUrl(os.path.join(os.getcwd(), 'include', 'map.html')))
+        self.ui.mapWebView.setPage(self.ui.mapWebPage)
+        self.ui.analysisWebPage = QWebPage()
+        self.ui.analysisWebView.setPage(self.ui.analysisWebPage)
         self.ui.menuView.addAction(self.ui.dockWProjects.toggleViewAction())
         self.ui.menuView.addAction(self.ui.dockWLocationsList.toggleViewAction())
         self.ui.menuView.addAction(self.ui.dockWCurrentLocationDetails.toggleViewAction())
+        #Connect all the signals
         self.ui.actionPluginsConfiguration.triggered.connect(self.showPluginsConfigurationDialog)
         self.ui.actionNewPersonProject.triggered.connect(self.showPersonProjectWizard)
         self.ui.actionAnalyzeCurrentProject.triggered.connect(self.analyzeProject)
         self.ui.actionReanalyzeCurrentProject.triggered.connect(self.analyzeProject)
         self.ui.actionDrawCurrentProject.triggered.connect(self.presentLocations)
+        self.ui.actionDrawCurrentProject.triggered.connect(self.presentAnalysis)
         self.ui.actionExportCSV.triggered.connect(self.exportProjectCSV)
         self.ui.actionExportKML.triggered.connect(self.exportProjectKML)
         self.ui.actionExportFilteredCSV.triggered.connect(functools.partial(self.exportProjectCSV, filtering=True))
@@ -119,12 +140,22 @@ class MainWindow(QMainWindow):
         self.ui.actionDeleteCurrentProject.triggered.connect(self.deleteCurrentProject)
         self.ui.actionFilterLocationsDate.triggered.connect(self.showFilterLocationsDateDialog)
         self.ui.actionFilterLocationsPosition.triggered.connect(self.showFilterLocationsPointDialog)
+        self.ui.actionFilterLocationsCustom.triggered.connect(self.showFilterLocationsCustomDialog)
         self.ui.actionRemoveFilters.triggered.connect(self.removeAllFilters)
         self.ui.actionShowHeatMap.toggled.connect(self.toggleHeatMap)
         self.ui.actionReportProblem.triggered.connect(GeneralUtilities.reportProblem)
         self.ui.actionAbout.triggered.connect(self.showAboutDialog)
         self.ui.actionCheckUpdates.triggered.connect(self.checkForUpdatedVersion)
         self.ui.actionExit.triggered.connect(self.close)
+        self.ui.treeViewProjects.doubleClicked.connect(self.doubleClickProjectItem)
+        self.ui.treeViewProjects.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.treeViewProjects.customContextMenuRequested.connect(self.showRightClickMenu)
+        self.ui.treeViewProjects.clicked.connect(self.currentProjectChanged)
+        self.ui.locationsTableView.clicked.connect(self.updateCurrentLocationDetails)
+        self.ui.locationsTableView.activated.connect(self.updateCurrentLocationDetails)
+        self.ui.locationsTableView.doubleClicked.connect(self.doubleClickLocationItem)
+        #default to showing the map
+        self.changeMainWidgetPage('map')
         self.loadProjectsFromStorage()
         #If option enabled check for updated version
 
@@ -134,41 +165,48 @@ class MainWindow(QMainWindow):
         result and the latest version number
         
         '''
-        
+
         try:
             latestVersion = urllib2.urlopen("http://www.geocreepy.com/version.html").read().rstrip()
-            
+
             updateCheckDialog = UpdateCheckDialog()
-            updateCheckDialog.ui.versionsTableWidget.setHorizontalHeaderLabels(('','Component','Status','Installed','Available'))
-            updateCheckDialog.ui.versionsTableWidget.setItem(0,1,QTableWidgetItem('Creepy'))
+            updateCheckDialog.ui.versionsTableWidget.setHorizontalHeaderLabels(
+                ('', 'Component', 'Status', 'Installed', 'Available'))
+            updateCheckDialog.ui.versionsTableWidget.setItem(0, 1, QTableWidgetItem('Creepy'))
             if StrictVersion(latestVersion) > StrictVersion(self.version):
-                updateCheckDialog.ui.versionsTableWidget.setItem(0,0,QTableWidgetItem(QIcon(QPixmap(':/creepy/exclamation')), ''))
-                updateCheckDialog.ui.versionsTableWidget.setItem(0,2,QTableWidgetItem('Outdated'))
-                updateCheckDialog.ui.dlNewVersionLabel.setText('<html><head/><body><p>Download the latest version from <a href="http://www.geocreepy.com"><span style=" text-decoration: underline; color:#0000ff;">geocreepy.com</span></a></p></body></html>')
+                updateCheckDialog.ui.versionsTableWidget.setItem(0, 0, QTableWidgetItem(
+                    QIcon(QPixmap(':/creepy/exclamation')), ''))
+                updateCheckDialog.ui.versionsTableWidget.setItem(0, 2, QTableWidgetItem('Outdated'))
+                updateCheckDialog.ui.dlNewVersionLabel.setText(
+                    '<html><head/><body><p>Download the latest version from <a href="http://www.geocreepy.com"><span style=" text-decoration: underline; color:#0000ff;">geocreepy.com</span></a></p></body></html>')
             else:
-                updateCheckDialog.ui.versionsTableWidget.setItem(0,0,QTableWidgetItem(QIcon(QPixmap(':/creepy/tick')), ''))
-                updateCheckDialog.ui.versionsTableWidget.setItem(0,2,QTableWidgetItem('Up To Date'))
-                updateCheckDialog.ui.dlNewVersionLabel.setText('<html><head/><body><p>You are already using the latest version of creepy. </p></body></html>')
-            updateCheckDialog.ui.versionsTableWidget.setItem(0,3,QTableWidgetItem(self.version))
-            updateCheckDialog.ui.versionsTableWidget.setItem(0,4,QTableWidgetItem(latestVersion))
+                updateCheckDialog.ui.versionsTableWidget.setItem(0, 0,
+                                                                 QTableWidgetItem(QIcon(QPixmap(':/creepy/tick')), ''))
+                updateCheckDialog.ui.versionsTableWidget.setItem(0, 2, QTableWidgetItem('Up To Date'))
+                updateCheckDialog.ui.dlNewVersionLabel.setText(
+                    '<html><head/><body><p>You are already using the latest version of creepy. </p></body></html>')
+            updateCheckDialog.ui.versionsTableWidget.setItem(0, 3, QTableWidgetItem(self.version))
+            updateCheckDialog.ui.versionsTableWidget.setItem(0, 4, QTableWidgetItem(latestVersion))
             updateCheckDialog.show()
             updateCheckDialog.exec_()
-        except Exception,err:
+        except Exception, err:
             if type(err) == 'string':
                 mes = err
             else:
                 mess = err.message
             self.showWarning(self.trUtf8('Error checking for updates'), mess)
-        
+
     def showFilterLocationsPointDialog(self):
         filterLocationsPointDialog = FilterLocationsPointDialog()
         filterLocationsPointDialog.ui.mapPage = QWebPage()
         myPyObj = filterLocationsPointDialog.pyObj()
-        filterLocationsPointDialog.ui.mapPage.mainFrame().addToJavaScriptWindowObject('myPyObj', myPyObj)  
-        filterLocationsPointDialog.ui.mapPage.mainFrame().setUrl(QUrl(os.path.join(os.getcwd(), 'include', 'mapSetPoint.html')))
+        filterLocationsPointDialog.ui.mapPage.mainFrame().addToJavaScriptWindowObject('myPyObj', myPyObj)
+        filterLocationsPointDialog.ui.mapPage.mainFrame().setUrl(
+            QUrl(os.path.join(os.getcwd(), 'include', 'mapSetPoint.html')))
         filterLocationsPointDialog.ui.radiusUnitComboBox.insertItem(0, QString('km'))
         filterLocationsPointDialog.ui.radiusUnitComboBox.insertItem(1, QString('m'))
-        filterLocationsPointDialog.ui.radiusUnitComboBox.activated[str].connect(filterLocationsPointDialog.onUnitChanged)
+        filterLocationsPointDialog.ui.radiusUnitComboBox.activated[str].connect(
+            filterLocationsPointDialog.onUnitChanged)
         filterLocationsPointDialog.ui.webView.setPage(filterLocationsPointDialog.ui.mapPage)
         filterLocationsPointDialog.show()
         if filterLocationsPointDialog.exec_():
@@ -185,25 +223,65 @@ class MainWindow(QMainWindow):
         filterLocationsDateDialog.ui.endDateCalendarWidget.setMaximumDate(QDate.currentDate())
         filterLocationsDateDialog.show()
         if filterLocationsDateDialog.exec_():
-            startDateTime = QDateTime(filterLocationsDateDialog.ui.stardateCalendarWidget.selectedDate(), filterLocationsDateDialog.ui.startDateTimeEdit.time()).toPyDateTime()
-            endDateTime = QDateTime(filterLocationsDateDialog.ui.endDateCalendarWidget.selectedDate(), filterLocationsDateDialog.ui.endDateTimeEdit.time()).toPyDateTime()
+            startDateTime = pytz.utc.localize(QDateTime(filterLocationsDateDialog.ui.stardateCalendarWidget.selectedDate(),
+                                      filterLocationsDateDialog.ui.startDateTimeEdit.time()).toPyDateTime())
+            endDateTime = pytz.utc.localize(QDateTime(filterLocationsDateDialog.ui.endDateCalendarWidget.selectedDate(),
+                                    filterLocationsDateDialog.ui.endDateTimeEdit.time()).toPyDateTime())
+            logger.debug("Filtering based on dates between : "+startDateTime.strftime('%Y-%m-%d %H:%M:%S %z')+"  "+endDateTime.strftime('%Y-%m-%d %H:%M:%S %z'))
             if startDateTime > endDateTime:
-                self.showWarning(self.trUtf8('Invalid Dates'), self.trUtf8('The start date needs to be before the end date.<p> Please try again ! </p>'))
+                self.showWarning(self.trUtf8('Invalid Dates'), self.trUtf8(
+                    'The start date needs to be before the end date.<p> Please try again ! </p>'))
             else:
                 self.filterLocationsByDate(startDateTime, endDateTime)
-            
+
+    def showFilterLocationsCustomDialog(self):
+        filterLocationsCustomDialog = FilterLocationsCustomDialog()
+        filterLocationsCustomDialog.ui.daysOfWeekListWidget.setSelectionMode(QAbstractItemView.MultiSelection)
+        filterLocationsCustomDialog.ui.monthsOfYearListWidget.setSelectionMode(QAbstractItemView.MultiSelection)
+        filterLocationsCustomDialog.ui.hoursOfDayListWidget.setSelectionMode(QAbstractItemView.MultiSelection)
+        daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        for dayOfWeek in daysOfWeek:
+            filterLocationsCustomDialog.ui.daysOfWeekListWidget.addItem(dayOfWeek)
+        monthsOfYear = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+        for monthOfYear in monthsOfYear:
+            filterLocationsCustomDialog.ui.monthsOfYearListWidget.addItem(monthOfYear)
+        for hourOfDay in range(24):
+            filterLocationsCustomDialog.ui.hoursOfDayListWidget.addItem(str(hourOfDay))
+        if filterLocationsCustomDialog.exec_():
+            t = filterLocationsCustomDialog.ui.daysOfWeekListWidget.selectedItems()
+            days = [daysOfWeek.index(str(selItem.text())) for selItem in filterLocationsCustomDialog.ui.daysOfWeekListWidget.selectedItems()]
+            hours = [int(selItem.text()) for selItem in filterLocationsCustomDialog.ui.hoursOfDayListWidget.selectedItems()]
+            months = [monthsOfYear.index(str(selItem.text()))+1 for selItem in filterLocationsCustomDialog.ui.monthsOfYearListWidget.selectedItems()]
+            if len(days) == 0 and len(hours) == 0 and len(months) == 0:
+                self.showWarning(self.trUtf8('Invalid Selection'), self.trUtf8(
+                    'Please select at least one of the criteria ! </p>'))
+            else:
+                self.filterLocationsCustom(days, months, hours)
+
     def filterLocationsByDate(self, startDate, endDate):
         if not self.currentProject:
             self.showWarning(self.trUtf8('No project selected'), self.trUtf8('Please select a project !'))
             self.ui.statusbar.showMessage(self.trUtf8('Please select a project !'))
             return
         for l in self.currentProject.locations:
-            if l.datetime > startDate and l.datetime < endDate:
+            if startDate < l.datetime < endDate:
                 l.visible = True
             else:
                 l.visible = False
         self.presentLocations([])
-    
+
+    def filterLocationsCustom(self, days, months, hours):
+        if not self.currentProject:
+            self.showWarning(self.trUtf8('No project selected'), self.trUtf8('Please select a project !'))
+            self.ui.statusbar.showMessage(self.trUtf8('Please select a project !'))
+            return
+        for l in self.currentProject.locations:
+            if l.datetime.weekday() in days and l.datetime.month in months and l.datetime.hour in hours:
+                l.visible = True
+            else:
+                l.visible = False
+        self.presentLocations([])
+
     def filterLocationsByPoint(self, lat, lng, radius):
         if not self.currentProject:
             self.showWarning(self.trUtf8('No project selected'), self.trUtf8('Please select a project !'))
@@ -233,7 +311,7 @@ class MainWindow(QMainWindow):
         QMessageBox.warning(self, title, text)
 
     def toggleHeatMap(self, checked):
-        mapFrame = self.ui.webPage.mainFrame()
+        mapFrame = self.ui.mapWebPage.mainFrame()
         if checked:
             mapFrame.evaluateJavaScript('showHeatmap()')
             mapFrame.evaluateJavaScript('hideMarkers()')
@@ -242,18 +320,20 @@ class MainWindow(QMainWindow):
             mapFrame.evaluateJavaScript('hideHeatmap()')
 
     def hideMarkers(self):
-        mapFrame = self.ui.webPage.mainFrame()
+        mapFrame = self.ui.mapWebPage.mainFrame()
         mapFrame.evaluateJavaScript('hideMarkers()')
 
     def showMarkers(self):
-        mapFrame = self.ui.webPage.mainFrame()
+        mapFrame = self.ui.mapWebPage.mainFrame()
         mapFrame.evaluateJavaScript('showMarkers()')
 
     def addMarkerToMap(self, mapFrame, location):
-        mapFrame.evaluateJavaScript(QString('addMarker(' + str(location.latitude) + ',' + str(location.longitude) + ',\"' + location.infowindow + '\")'))
+        mapFrame.evaluateJavaScript(QString('addMarker(' + str(location.latitude) + ',' + str(
+            location.longitude) + ',\"' + location.infowindow + '\",\"' + location.plugin + '\")'))
 
     def centerMap(self, mapFrame, location):
-        mapFrame.evaluateJavaScript(QString('centerMap(' + str(location.latitude) + ',' + str(location.longitude) + ')'))
+        mapFrame.evaluateJavaScript(
+            QString('centerMap(' + str(location.latitude) + ',' + str(location.longitude) + ')'))
 
     def setMapZoom(self, mapFrame, level):
         mapFrame.evaluateJavaScript(QString('setZoom(' + str(level) + ')'))
@@ -265,17 +345,19 @@ class MainWindow(QMainWindow):
         if not project:
             project = self.currentProject
         if project.isAnalysisRunning:
-            self.showWarning(self.trUtf8('Cannot Edit Project'), self.trUtf8('Please wait until analysis is finished before performing further actions on the project'))
+            self.showWarning(self.trUtf8('Cannot Edit Project'), self.trUtf8(
+                'Please wait until analysis is finished before performing further actions on the project'))
             return
-        projectName = project.projectName+'.db'
+        projectName = project.projectName + '.db'
         verifyDeleteDialog = VerifyDeleteDialog()
-        verifyDeleteDialog.ui.label.setText(unicode(verifyDeleteDialog.ui.label.text(),'utf-8').replace('@project@', project.projectName))
+        verifyDeleteDialog.ui.label.setText(
+            unicode(verifyDeleteDialog.ui.label.text(), 'utf-8').replace('@project@', project.projectName))
         verifyDeleteDialog.show()
         if verifyDeleteDialog.exec_():
             project.deleteProject(projectName)
             self.loadProjectsFromStorage()
-            
-    def exportProjectCSV(self, project,filtering=False):
+
+    def exportProjectCSV(self, project, filtering=False):
         # If the project was not provided explicitly, analyze the currently selected one
         if not project:
             project = self.currentProject
@@ -284,26 +366,23 @@ class MainWindow(QMainWindow):
             self.ui.statusbar.showMessage(self.trUtf8('Please select a project first'))
             return
         if not project.locations:
-            self.showWarning(self.trUtf8('No locations found'), self.trUtf8('The selected project has no locations to be exported'))
+            self.showWarning(self.trUtf8('No locations found'),
+                             self.trUtf8('The selected project has no locations to be exported'))
             self.ui.statusbar.showMessage(self.trUtf8('The selected project has no locations to be exported'))
             return
-        fileName = QFileDialog.getSaveFileName(None, self.trUtf8('Save CSV export as...'), os.getcwd(), 'All files (*.*)')
+        fileName = QFileDialog.getSaveFileName(None, self.trUtf8('Save CSV export as...'), os.getcwd(),
+                                               'All files (*.*)')
         if fileName:
             try:
-                fileobj = open(fileName, 'wb')
-                writer = csv.writer(fileobj, quoting=csv.QUOTE_ALL)
-                writer.writerow(('Timestamp', 'Latitude', 'Longitude', 'Location Name', 'Retrieved from', 'Context'))
+                fileobj = codecs.open(fileName, 'wb', encoding='utf8')
+                linesList = []
+                linesList.append('"Timestamp","Latitude","Longitude","Location Name","Retrieved from","Context"')
                 for loc in project.locations:
                     if (filtering and loc.visible) or not filtering:
-                        #handle unicode now that we are writing to a file                            
-                        if isinstance(loc.context,unicode):
-                            try:
-                                writer.writerow((loc.datetime.strftime('%Y-%m-%d %H:%M:%S %z'), loc.latitude, loc.longitude,loc.shortName.encode('utf-8'), loc.plugin, loc.context.encode('utf-8')))
-                            except Exception,err:
-                                logger.error(err)
-                                writer.writerow((loc.datetime.strftime('%Y-%m-%d %H:%M:%S %z'), loc.latitude, loc.longitude,'Non printable characters in string', loc.plugin, 'Non printable characters in string'))
-                        else:
-                            writer.writerow((loc.datetime.strftime('%Y-%m-%d %H:%M:%S %z'), loc.latitude, loc.longitude,loc.shortName, loc.plugin, loc.context))                 
+                        linesList.append(u'"{0:s}","{1:s}","{2:s}","{3:s}","{4:s}","{5:s}"'.format(loc.datetime.strftime('%Y-%m-%d %H:%M:%S %z'), str(loc.latitude), str(loc.longitude),
+                                    loc.shortName, loc.plugin, loc.context))
+                csv_string = '\n'.join(linesList)
+                fileobj.write(csv_string)
                 fileobj.close()
                 self.ui.statusbar.showMessage(self.trUtf8('Project Locations have been exported successfully'))
             except Exception, err:
@@ -319,42 +398,37 @@ class MainWindow(QMainWindow):
             self.ui.statusbar.showMessage(self.trUtf8('Please select a project first'))
             return
         if not project.locations:
-            self.showWarning(self.trUtf8('No locations found'), self.trUtf8('The selected project has no locations to be exported'))
+            self.showWarning(self.trUtf8('No locations found'),
+                             self.trUtf8('The selected project has no locations to be exported'))
             self.ui.statusbar.showMessage(self.trUtf8('The selected project has no locations to be exported'))
             return
-        
-        fileName = QFileDialog.getSaveFileName(None, self.trUtf8('Save KML export as...'), os.getcwd(), 'All files (*.*)')
+
+        fileName = QFileDialog.getSaveFileName(None, self.trUtf8('Save KML export as...'), os.getcwd(),
+                                               'All files (*.*)')
         if fileName:
             try:
-                fileobj = open(fileName, 'wb')
+                fileobj = codecs.open(fileName, 'wb', encoding='utf8')
                 # kml is the list to hold all xml attribs. it will be joined in a string later
                 kml = []
                 kml.append('<?xml version=\"1.0\" encoding=\"UTF-8\"?>')
-                kml.append('<kml xmlns=\"http://www.opengis.net/kml/2.2\">') 
+                kml.append('<kml xmlns=\"http://www.opengis.net/kml/2.2\">')
                 kml.append('<Document>')
-                kml.append('  <name>%s.kml</name>' % id)
+                kml.append('  <name>{0:s}.kml</name>'.format(project.projectName))
                 for loc in project.locations:
                     if (filtering and loc.visible) or not filtering:
-                        #handle unicode now that we are writing to a file
                         kml.append('  <Placemark>')
-                        kml.append('  <name>%s</name>' % loc.datetime.strftime('%Y-%m-%d %H:%M:%S %z'))
-                        #handle unicode now that we are writing to a file                            
-                        if isinstance(loc.context,unicode):
-                            try:
-                                kml.append('    <description> %s' % GeneralUtilities.html_escape(loc.context.encode('utf-8')))
-                            except Exception, err:
-                                logger.error(err)
-                                kml.append('    <description> non printable characters in context')
-                        else:
-                            kml.append('    <description> %s' % GeneralUtilities.html_escape(loc.context))
-                        kml.append('    </description>') 
+                        kml.append(u'  <name>{0:s}</name>'.format(GeneralUtilities.html_escape(loc.shortName)))
+
+                        kml.append(u'    <description> {0:s}'.format(GeneralUtilities.html_escape(loc.context)))
+                        kml.append('    </description>')
                         kml.append('    <Point>')
-                        kml.append('       <coordinates>%s, %s, 0</coordinates>' % (loc.longitude, loc.latitude))
+                        kml.append(
+                            '       <coordinates>{0:s}, {1:s}, 0</coordinates>'.format(str(loc.longitude), str(loc.latitude)))
                         kml.append('    </Point>')
                         kml.append('  </Placemark>')
                 kml.append('</Document>')
                 kml.append('</kml>')
-                
+
                 kml_string = '\n'.join(kml)
                 fileobj.write(kml_string)
                 fileobj.close()
@@ -373,16 +447,18 @@ class MainWindow(QMainWindow):
             project = self.currentProject
         if project:
             if project.isAnalysisRunning:
-                self.showWarning(self.trUtf8('Cannot Edit Project'), self.trUtf8('Please wait until analysis is finished before performing further actions on the project'))
+                self.showWarning(self.trUtf8('Cannot Edit Project'), self.trUtf8(
+                    'Please wait until analysis is finished before performing further actions on the project'))
                 return
             self.ui.statusbar.showMessage(self.trUtf8('Analyzing project for locations. Please wait...'))
             project.isAnalysisRunning = True
-            self.analyzeProjectThreadInstance = self.analyzeProjectThread(project)
-            self.connect(self.analyzeProjectThreadInstance, SIGNAL('locations(PyQt_PyObject)'), self.projectAnalysisFinished)
+            self.analyzeProjectThreadInstance = self.AnalyzeProjectThread(project)
+            self.connect(self.analyzeProjectThreadInstance, SIGNAL('locations(PyQt_PyObject)'),
+                         self.projectAnalysisFinished)
             self.analyzeProjectThreadInstance.start()
         else:
             self.showWarning(self.trUtf8('No project selected'), self.trUtf8('Please select a project !'))
-            
+
     def projectAnalysisFinished(self, project):
         '''
         Called when the analysis thread finishes. It saves the project with the locations and draws the map
@@ -390,21 +466,38 @@ class MainWindow(QMainWindow):
         self.ui.statusbar.showMessage(self.trUtf8('Project Analysis complete !'))
         projectNode = ProjectNode(project.projectName, project)
         locationsNode = LocationsNode(self.trUtf8('Locations'), projectNode)
-#        analysisNode = AnalysisNode(self.trUtf8('Analysis'), projectNode)
+        analysisNode = AnalysisNode(self.trUtf8('Analysis'), projectNode)
         project.isAnalysisRunning = False
         project.storeProject(projectNode)
         '''
         If the analysis produced no results whatsoever, inform the user
         '''
         if not project.locations:
-            self.showWarning(self.trUtf8('No Locations Found'), self.trUtf8('We could not find any locations for the analyzed project'))
+            self.showWarning(self.trUtf8('No Locations Found'),
+                             self.trUtf8('We could not find any locations for the analyzed project'))
         else:
             self.presentLocations(project.locations)
+        self.presentAnalysis(project.analysisDocument)
+
+    def presentAnalysis(self, analysisDocument):
+        """
+
+        :param analysisDocument:
+        """
+        if not analysisDocument:
+            if not self.currentProject:
+                self.showWarning(self.trUtf8('No project selected'), self.trUtf8('Please select a project !'))
+                self.ui.statusbar.showMessage(self.trUtf8('Please select a project !'))
+                return
+            else:
+                analysisDocument = self.currentProject.analysisDocument
+        analysisFrame = self.ui.analysisWebPage.mainFrame()
+        analysisFrame.setHtml(QString(unicode(analysisDocument)), QUrl('file://'+os.path.join(os.getcwd(), 'include/')))
 
     def presentLocations(self, locations):
-        '''
-        Also called when the user clicks on "Analyze Target". It redraws the map and populates the location list
-        '''
+        """
+        Called when the user clicks on "Analyze Target". It redraws the map and populates the location list
+        """
         if not locations:
             if not self.currentProject:
                 self.showWarning(self.trUtf8('No project selected'), self.trUtf8('Please select a project !'))
@@ -412,7 +505,7 @@ class MainWindow(QMainWindow):
                 return
             else:
                 locations = self.currentProject.locations
-        mapFrame = self.ui.webPage.mainFrame()
+        mapFrame = self.ui.mapWebPage.mainFrame()
         self.clearMarkers(mapFrame)
         visibleLocations = []
         if locations:
@@ -424,19 +517,17 @@ class MainWindow(QMainWindow):
                 self.centerMap(mapFrame, visibleLocations[0])
                 self.setMapZoom(mapFrame, 15)
         else:
-            self.showWarning(self.trUtf8('No locations found'), self.trUtf8('No locations found for the selected project.'))
+            self.showWarning(self.trUtf8('No locations found'),
+                             self.trUtf8('No locations found for the selected project.'))
             self.ui.statusbar.showMessage(self.trUtf8('No locations found for the selected project.'))
-        
-        self.locationsTableModel = LocationsTableModel(visibleLocations) 
+
+        self.locationsTableModel = LocationsTableModel(visibleLocations)
         self.ui.locationsTableView.setModel(self.locationsTableModel)
-        self.ui.locationsTableView.clicked.connect(self.updateCurrentLocationDetails)
-        self.ui.locationsTableView.activated.connect(self.updateCurrentLocationDetails)
-        self.ui.locationsTableView.doubleClicked.connect(self.doubleClickLocationItem)
-        self.ui.locationsTableView.resizeColumnsToContents()   
+        self.ui.locationsTableView.resizeColumnsToContents()
 
     def doubleClickLocationItem(self, index):
         location = self.locationsTableModel.locations[index.row()]
-        mapFrame = self.ui.webPage.mainFrame()
+        mapFrame = self.ui.mapWebPage.mainFrame()
         self.centerMap(mapFrame, location)
         self.setMapZoom(mapFrame, 18)
 
@@ -455,9 +546,9 @@ class MainWindow(QMainWindow):
         '''
         Changes what is shown in the main window between the map mode and the analysis mode
         '''
-        if pageType == 'map':
+        if 'map' == pageType:
             self.ui.centralStackedWidget.setCurrentIndex(0)
-        else:
+        elif pageType == 'analysis':
             self.ui.centralStackedWidget.setCurrentIndex(1)
 
     def wizardButtonPressed(self, plugin):
@@ -465,7 +556,7 @@ class MainWindow(QMainWindow):
         This metod calls the wizard of the selected plugin and then reads again the configuration options from file
         for that specific plugin. This happens in order to reflect any changes the wizard might have made to the configuration 
         options.
-        '''    
+        '''
         plugin.plugin_object.runConfigWizard()
         self.pluginsConfigurationDialog.close()
         self.showPluginsConfigurationDialog()
@@ -492,7 +583,7 @@ class MainWindow(QMainWindow):
             scroll.setWidgetResizable(True)
             layout = QVBoxLayout()
             titleLabel = QLabel(plugin.name + self.trUtf8(' Configuration Options'))
-            layout.addWidget(titleLabel)    
+            layout.addWidget(titleLabel)
             vboxWidget = QWidget()
             vboxWidget.setObjectName(_fromUtf8('vboxwidget_container_' + plugin.name))
             vbox = QGridLayout()
@@ -532,7 +623,7 @@ class MainWindow(QMainWindow):
             '''
             Add the wizard button if the plugin has a configuration wizard
             '''
-            if plugin.plugin_object.hasWizard:  
+            if plugin.plugin_object.hasWizard:
                 wizardButton = QPushButton(self.trUtf8('Run Configuration Wizard'))
                 wizardButton.setObjectName(_fromUtf8('wizardButton_' + plugin.name))
                 wizardButton.setToolTip(self.trUtf8('Click here to run the configuration wizard for the plugin'))
@@ -544,11 +635,12 @@ class MainWindow(QMainWindow):
             layout.addWidget(scroll)
             layout.addStretch(1)
             pluginsConfigButtonContainer = QHBoxLayout()
-            checkConfigButton = QPushButton(self.trUtf8('Test Plugin Configuration')) 
+            checkConfigButton = QPushButton(self.trUtf8('Test Plugin Configuration'))
             checkConfigButton.setObjectName(_fromUtf8('checkConfigButton_' + plugin.name))
             checkConfigButton.setToolTip(self.trUtf8('Click here to test the plugin\'s configuration'))
             checkConfigButton.resize(checkConfigButton.sizeHint())
-            checkConfigButton.clicked.connect(functools.partial(self.pluginsConfigurationDialog.checkPluginConfiguration, plugin))
+            checkConfigButton.clicked.connect(
+                functools.partial(self.pluginsConfigurationDialog.checkPluginConfiguration, plugin))
             applyConfigButton = QPushButton(self.trUtf8('Apply Configuration'))
             applyConfigButton.setObjectName(_fromUtf8('applyConfigButton_' + plugin.name))
             applyConfigButton.setToolTip(self.trUtf8('Click here to save the plugin\'s configuration options'))
@@ -573,34 +665,38 @@ class MainWindow(QMainWindow):
         Changes the page in the PluginConfiguration Dialog depending on which plugin is currently
         selected in the plugin list
         '''
-        self.pluginsConfigurationDialog.ui.ConfigurationDetails.setCurrentIndex(modelIndex.row())   
+        self.pluginsConfigurationDialog.ui.ConfigurationDetails.setCurrentIndex(modelIndex.row())
 
     def showPersonProjectWizard(self):
         '''
         Shows the PersonProjectWizard and stores the project information once the wizard is completed
         '''
         personProjectWizard = PersonProjectWizard()
-        personProjectWizard.ProjectWizardPluginListModel = ProjectWizardPluginListModel(personProjectWizard.loadConfiguredPlugins(), self)
-        personProjectWizard.ui.personProjectAvailablePluginsListView.setModel(personProjectWizard.ProjectWizardPluginListModel)
+        personProjectWizard.ProjectWizardPluginListModel = ProjectWizardPluginListModel(
+            personProjectWizard.loadConfiguredPlugins(), self)
+        personProjectWizard.ui.personProjectAvailablePluginsListView.setModel(
+            personProjectWizard.ProjectWizardPluginListModel)
         personProjectWizard.ui.personProjectSearchButton.clicked.connect(personProjectWizard.searchForTargets)
         # Creating it here so it becomes available globally in all functions
         personProjectWizard.ProjectWizardSelectedTargetsTable = ProjectWizardSelectedTargetsTable([], self)
         if personProjectWizard.exec_():
             project = Project()
             project.projectName = unicode(personProjectWizard.ui.personProjectNameValue.text().toUtf8(), 'utf-8')
-            project.projectKeywords = [keyword.strip() for keyword in unicode(personProjectWizard.ui.personProjectKeywordsValue.text().toUtf8(), 'utf-8').split(',')]
+            project.projectKeywords = [keyword.strip() for keyword in
+                                       unicode(personProjectWizard.ui.personProjectKeywordsValue.text().toUtf8(),
+                                               'utf-8').split(',')]
             project.projectDescription = personProjectWizard.ui.personProjectDescriptionValue.toPlainText()
             project.enabledPlugins = personProjectWizard.readSearchConfiguration()
             project.dateCreated = datetime.datetime.now()
             project.dateEdited = datetime.datetime.now()
             project.locations = []
-            project.analysis = None
+            project.analysisDocument = None
             project.isAnalysisRunning = False
             project.viewSettigns = {}
             project.selectedTargets = personProjectWizard.selectedTargets
             projectNode = ProjectNode(project.projectName, project)
             locationsNode = LocationsNode('Locations', projectNode)
-#            analysisNode = AnalysisNode('Analysis', projectNode)
+            analysisNode = AnalysisNode('Analysis', projectNode)
             project.storeProject(projectNode)
             # Now that we have saved the project, reload all projects to be shown in the UI
             self.loadProjectsFromStorage()
@@ -611,7 +707,9 @@ class MainWindow(QMainWindow):
         """
         # Show the existing Projects 
         projectsDir = os.path.join(os.getcwd(), 'projects')
-        projectFileNames = [ os.path.join(projectsDir, f) for f in os.listdir(projectsDir) if (os.path.isfile(os.path.join(projectsDir, f)) and f.endswith('.db'))]
+        projectFileNames = [os.path.join(projectsDir, f) for f in os.listdir(projectsDir) if
+                            (os.path.isfile(os.path.join(projectsDir, f)) and f.endswith('.db'))]
+        self.projectNames = [n.replace('.db', '').replace(str(projectsDir) + '/', '') for n in projectFileNames]
         rootNode = ProjectTreeNode(self.trUtf8('Projects'))
         for projectFile in projectFileNames:
             projectObject = shelve.open(projectFile)
@@ -620,13 +718,9 @@ class MainWindow(QMainWindow):
             except Exception, err:
                 logger.error('Could not read stored project from file')
                 logger.exception(err)
-        self.projectTreeModel = ProjectTreeModel(rootNode) 
+        self.projectTreeModel = ProjectTreeModel(rootNode)
         self.ui.treeViewProjects.setModel(self.projectTreeModel)
-        self.ui.treeViewProjects.doubleClicked.connect(self.doubleClickProjectItem)
-        self.ui.treeViewProjects.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.ui.treeViewProjects.customContextMenuRequested.connect(self.showRightClickMenu)
-        self.ui.treeViewProjects.clicked.connect(self.currentProjectChanged)
-    
+
     def currentProjectChanged(self, index):
         '''
         Called whenever a project node or one of its children is clicked
@@ -636,7 +730,7 @@ class MainWindow(QMainWindow):
         if nodeObject.nodeType() == 'PROJECT':
             self.currentProject = nodeObject.project
         elif nodeObject.nodeType() == 'LOCATIONS':
-            self.currentProject = nodeObject.parent().project  
+            self.currentProject = nodeObject.parent().project
         elif nodeObject.nodeType() == 'ANALYSIS':
             self.currentProject = nodeObject.parent().project
 
@@ -656,11 +750,13 @@ class MainWindow(QMainWindow):
         elif nodeObject.nodeType() == 'ANALYSIS':
             self.currentProject = nodeObject.parent().project
             self.changeMainWidgetPage('analysis')
-        
+            self.presentAnalysis(None)
+
     def showRightClickMenu(self, pos):
         '''
         Called when the user right-clicks somewhere in the area of the existing projects
         '''
+
         # We will not allow multi select so the selectionModel().selection().indexes() will contain only one
         if self.ui.treeViewProjects.selectionModel().selection().count() == 1:
             nodeObject = self.ui.treeViewProjects.selectionModel().selection().indexes()[0].internalPointer()
@@ -680,9 +776,9 @@ class MainWindow(QMainWindow):
                 else:
                     rightClickMenu.addAction(self.ui.actionAnalyzeCurrentProject)
                     rightClickMenu.addAction(self.ui.actionDeleteCurrentProject)
-                    
                 if rightClickMenu.exec_(self.ui.treeViewProjects.viewport().mapToGlobal(pos)):
                     pass
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

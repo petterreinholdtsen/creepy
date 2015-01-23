@@ -5,11 +5,13 @@ from PyQt4.QtCore import QModelIndex
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QIcon,QPixmap
 from PyQt4.QtCore import QVariant
+from components import creepy_resources_compiled
 
 class ProjectTreeModel(QAbstractItemModel):
     def __init__(self, root, parent=None):
         super(ProjectTreeModel, self).__init__(parent)
         self._rootNode = root
+
         
     def rowCount(self, parent):
         if not parent.isValid():
@@ -29,11 +31,11 @@ class ProjectTreeModel(QAbstractItemModel):
                 return QVariant(node.name())
             if role == Qt.DecorationRole:
                 if node.nodeType() == 'PROJECT':
-                    return QIcon(QPixmap(':/creepy/folder'))
+                    return QIcon(QPixmap(':/creepy/blue-folder-horizontal.png'))
                 if node.nodeType() == "LOCATIONS":
-                    return QIcon(QPixmap(':/creepy/marker'))
+                    return QIcon(QPixmap(':/creepy/marker.png'))
                 if node.nodeType() == 'ANALYSIS':
-                    return QIcon(QPixmap(':/cr/analysis.png'))
+                    return QIcon(QPixmap(':/creepy/receipt-text.png'))
         else:
             return QVariant()
     
