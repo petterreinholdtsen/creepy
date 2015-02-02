@@ -14,11 +14,12 @@ from tweepy import Cursor
 from configobj import ConfigObj
 from dominate.tags import *
 from collections import Counter
+from utilities import GeneralUtilities
 
 #set up logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler(os.path.join(os.getcwd(),'creepy_main.log'))
+fh = logging.FileHandler(os.path.join(GeneralUtilities.getLogDir(),'creepy_main.log'))
 fh.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(levelname)s:%(asctime)s  In %(filename)s:%(lineno)d: %(message)s')
 fh.setFormatter(formatter)
@@ -30,10 +31,7 @@ class Twitter(InputPlugin):
     
     def __init__(self):
         #Try and read the labels file
-        labels_filename = self.name+".labels"
-        labels_file = os.path.join(os.getcwd(),'plugins', self.name, labels_filename)
-        labels_config = ConfigObj(infile=labels_file)
-        labels_config.create_empty=False
+        labels_config = self.getConfigObj(self.name+'.labels')
         try:
             logger.debug("Trying to load the labels file for the  "+self.name+" plugin .")
             self.labels = labels_config['labels']

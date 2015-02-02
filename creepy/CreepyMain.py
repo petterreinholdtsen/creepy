@@ -39,14 +39,14 @@ from dominate.tags import *
 # set up logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler(os.path.join(os.getcwd(), 'creepy_main.log'))
+fh = logging.FileHandler(os.path.join(GeneralUtilities.getLogDir(), 'creepy_main.log'))
 fh.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(levelname)s:%(asctime)s  In %(filename)s:%(lineno)d: %(message)s')
 fh.setFormatter(formatter)
 logger.addHandler(fh)
 # Capture stderr and stdout to a file
-sys.stdout = open(os.path.join(os.getcwd(),'creepy_stdout.log'), 'w')
-sys.stderr = open(os.path.join(os.getcwd(),'creepy_stderr.log'), 'w')
+#sys.stdout = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stdout.log'), 'w')
+#sys.stderr = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stderr.log'), 'w')
 try:
     _fromUtf8 = QString.fromUtf8
 except AttributeError:
@@ -62,7 +62,7 @@ class MainWindow(QMainWindow):
         def run(self):
             pluginManager = PluginManagerSingleton.get()
             pluginManager.setCategoriesFilter({'Input': InputPlugin})
-            pluginManager.setPluginPlaces([os.path.join(os.getcwd(), 'plugins')])
+            pluginManager.setPluginPlaces(GeneralUtilities.getPluginDirs())
             pluginManager.locatePlugins()
             pluginManager.loadPlugins()
             locationsList = []
@@ -119,7 +119,7 @@ class MainWindow(QMainWindow):
         self.projectsList = []
         self.currentProject = None
         self.ui.mapWebPage = QWebPage()
-        self.ui.mapWebPage.mainFrame().setUrl(QUrl(os.path.join(os.getcwd(), 'include', 'map.html')))
+        self.ui.mapWebPage.mainFrame().setUrl(QUrl(os.path.join(GeneralUtilities.getIncludeDir(), 'map.html')))
         self.ui.mapWebView.setPage(self.ui.mapWebPage)
         self.ui.analysisWebPage = QWebPage()
         self.ui.analysisWebView.setPage(self.ui.analysisWebPage)
@@ -202,7 +202,7 @@ class MainWindow(QMainWindow):
         myPyObj = filterLocationsPointDialog.pyObj()
         filterLocationsPointDialog.ui.mapPage.mainFrame().addToJavaScriptWindowObject('myPyObj', myPyObj)
         filterLocationsPointDialog.ui.mapPage.mainFrame().setUrl(
-            QUrl(os.path.join(os.getcwd(), 'include', 'mapSetPoint.html')))
+            QUrl(os.path.join(GeneralUtilities.getIncludeDir(), 'mapSetPoint.html')))
         filterLocationsPointDialog.ui.radiusUnitComboBox.insertItem(0, QString('km'))
         filterLocationsPointDialog.ui.radiusUnitComboBox.insertItem(1, QString('m'))
         filterLocationsPointDialog.ui.radiusUnitComboBox.activated[str].connect(
@@ -571,6 +571,7 @@ class MainWindow(QMainWindow):
         self.pluginsConfigurationDialog.ui.ConfigurationDetails.setGeometry(QRect(260, 10, 511, 561))
         self.pluginsConfigurationDialog.ui.ConfigurationDetails.setObjectName(_fromUtf8('ConfigurationDetails'))
         pl = []
+        a = self.pluginsConfigurationDialog.PluginManager.getAllPlugins()
         for plugin in sorted(self.pluginsConfigurationDialog.PluginManager.getAllPlugins(), key=lambda x: x.name):
             pl.append(plugin)
             '''

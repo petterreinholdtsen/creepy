@@ -9,6 +9,7 @@ from models.ProjectWizardPossibleTargetsTable import ProjectWizardPossibleTarget
 from models.InputPlugin import InputPlugin
 from yapsy.PluginManager import PluginManagerSingleton
 from ui.PersonProjectWizard import Ui_personProjectWizard
+from utilities import GeneralUtilities
 
 try:
     _fromUtf8 = QString.fromUtf8
@@ -107,7 +108,7 @@ class PersonProjectWizard(QWizard):
         '''
         self.PluginManager = PluginManagerSingleton.get()
         self.PluginManager.setCategoriesFilter({'Input': InputPlugin})
-        self.PluginManager.setPluginPlaces([os.path.join(os.getcwdu(), 'plugins')])
+        self.PluginManager.setPluginPlaces(GeneralUtilities.getPluginDirs())
         self.PluginManager.locatePlugins()
         self.PluginManager.loadPlugins()
         pluginList = sorted(self.PluginManager.getAllPlugins(), key=lambda x: x.name)

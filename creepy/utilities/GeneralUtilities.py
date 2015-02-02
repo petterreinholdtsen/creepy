@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 from os.path import expanduser
 import webbrowser
+import os
+import errno
 from math import radians, cos, sin, asin, sqrt
 
 
@@ -9,8 +11,32 @@ def getUserHome():
     return expanduser("~")
 
 
+def getIncludeDir():
+    """ Provide path to include directory.  Change this for installed packages """
+    incdir = os.path.join(os.getcwdu(), 'include')
+    if os.path.isdir(incdir):
+        return incdir
+    else:
+        return "/usr/share/creepy/include"
+
+
+def getLogDir():
+    logdir = expanduser("~/.creepy")
+    try: os.makedirs(logdir)
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir(logdir):
+            pass
+        else:
+            raise
+    return logdir
+
+
+def getPluginDirs():
+#    return ["/usr/share/creepy/plugins", os.path.join(os.getcwd(), 'plugins')]
+     return [os.path.join(os.getcwd(), 'plugins')]
+
 def reportProblem():
-    webbrowser.open_new_tab('https://github.com/ilektrojohn/creepy/issues')
+    webbrowser.open_new_tab('https://github.com/jkakavas/creepy/issues')
 
 
 def calcDistance(lat1, lng1, lat2, lng2):
