@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from models.InputPlugin import InputPlugin
 from oauth2client.client import OAuth2WebServerFlow, AccessTokenCredentials, Credentials
-from apiclient.discovery import build
+from googleapiclient.discovery import build
 import logging
 import os
 import urllib

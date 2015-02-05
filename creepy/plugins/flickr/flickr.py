@@ -50,7 +50,7 @@ class Flickr(InputPlugin):
                 return flickr
             else:
                 return None
-        except FlickrError, err:
+        except Exception, err:
             logger.error(err)
             return None
 
@@ -62,9 +62,9 @@ class Flickr(InputPlugin):
 
             # Try to distinguish between mail and username in the search term
             if re.match("[\w\-\.+]+@(\w[\w\-]+\.)+[\w\-]+", search_term):
-                results = self.api.people_findByEmail(find_email=search_term)
+                results = self.api.people_findByEmail(find_email=unicode(search_term))
             else:
-                results = self.api.people_findByUsername(username=search_term)
+                results = self.api.people_findByUsername(username=unicode(search_term))
 
             for userid in results.find('user').items():
                 possibleTargets.append(self.getUserInfo(userid[1]))
