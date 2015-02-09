@@ -20,6 +20,7 @@ formatter = logging.Formatter('%(levelname)s:%(asctime)s  In %(filename)s:%(line
 fh.setFormatter(formatter)
 logger.addHandler(fh)
 
+
 class Instagram(InputPlugin):
     
     name = "instagram"
@@ -36,25 +37,25 @@ class Instagram(InputPlugin):
             logger.error("Could not load the labels file for the  "+self.name+" plugin .")  
             logger.exception(err) 
         self.config, self.options_string = self.readConfiguration("string_options")
-        self.api = self.getAuthenticatedAPI()
-    
+        self.api = None
+
     def getAuthenticatedAPI(self):
-        return  InstagramAPI(access_token = self.options_string['hidden_access_token'])     
+        return InstagramAPI(access_token=self.options_string['hidden_access_token'])
 
     def isConfigured(self):
-        if not self.api:
+        if self.api is None:
             self.api = self.getAuthenticatedAPI()
         try:
             self.api.user()
-            return (True,"")
+            return True, ""
         except Exception, err:
-            return (False, err.error_message)
+            return False, err.error_message
     
     def searchForTargets(self, search_term):
         logger.debug("Attempting to search for targets. Search term was : "+search_term)
         possibleTargets = []
         try:
-            if not self.api:
+            if self.api is None:
                 self.api = self.getAuthenticatedAPI()
             results = self.api.user_search(q=search_term)
             
@@ -64,7 +65,7 @@ class Instagram(InputPlugin):
                 target['targetUsername'] = i.username
                 target['targetPicture'] = 'profile_pic_%s' % i.id
                 target['targetFullname'] = i.full_name
-                #save the pic in the temp folder to show it later
+                # save the pic in the temp folder to show it later
                 filename = 'profile_pic_%s' % i.id
                 temp_file = os.path.join(os.getcwdu(), "temp", filename)
                 if not os.path.exists(temp_file):
@@ -78,7 +79,7 @@ class Instagram(InputPlugin):
    
     def getAllPhotos(self, uid, count, max_id, photos):
         logger.debug("Attempting to retrieve all photos for user "+uid)
-        if not self.api:
+        if self.api is None:
             self.api = self.getAuthenticatedAPI()
         new_photos, next1 = self.api.user_recent_media(user_id=uid, count=count, max_id=max_id)
         if new_photos:
@@ -97,7 +98,7 @@ class Instagram(InputPlugin):
         logger.debug("Attempting to retrieve all photos for user "+target['targetUserid'])
         locations_list = []
         try:
-            if not self.api:
+            if self.api is None:
                 self.api = self.getAuthenticatedAPI()
             photos_list = self.getAllPhotos(target['targetUserid'], 33, None, [])
             for i in photos_list:
@@ -180,9 +181,6 @@ class Instagram(InputPlugin):
         '''
         if not self.labels:
             return key
-        if not key in self.labels.keys():
+        if key not in self.labels.keys():
             return key
         return self.labels[key]
-
-    def urlChanged(self, url):
-        print url

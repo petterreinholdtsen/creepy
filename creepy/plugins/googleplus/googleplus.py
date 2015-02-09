@@ -11,7 +11,6 @@ import dateutil.parser
 from PyQt4.QtGui import QWizard, QWizardPage, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QMessageBox
 from PyQt4.QtCore import QUrl
 from PyQt4.QtWebKit import QWebView
-from configobj import ConfigObj
 from utilities import GeneralUtilities
 
 #set up logging
@@ -41,13 +40,13 @@ class Googleplus(InputPlugin):
             logger.exception(err)
         self.config, self.options_string = self.readConfiguration('string_options')
         self.options_boolean = self.readConfiguration('boolean_options')[1]
-        self.service = self.getAuthenticatedService()
+        self.service = None
 
     def searchForTargets(self, search_term):
         possibleTargets = []
         logger.debug('Searching for Targets from Google+ Plugin. Search term is : {0}'.format(search_term))
         try:
-            if not self.service:
+            if self.service is None:
                 self.service = self.getAuthenticatedService()
             peopleResource = self.service.people()
             peopleDocument = peopleResource.search(query=search_term).execute()
@@ -153,7 +152,7 @@ class Googleplus(InputPlugin):
     element contains an optional message for the user
     '''
     def isConfigured(self):
-        if not self.service:
+        if self.service is None:
             self.service = self.getAuthenticatedService()
         try:
             peopleResource = self.service.people()
@@ -166,7 +165,7 @@ class Googleplus(InputPlugin):
 
 
     def returnAnalysis(self, target, search_params):
-        if not self.service:
+        if self.service is None:
             self.service = self.getAuthenticatedService()
         locations_list = []
         try:
@@ -217,6 +216,6 @@ class Googleplus(InputPlugin):
         '''
         if not self.labels:
             return key
-        if not key in self.labels.keys():
+        if key not in self.labels.keys():
             return key
         return self.labels[key]

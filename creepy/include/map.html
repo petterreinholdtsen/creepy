@@ -19,9 +19,6 @@
     <script type="text/javascript"
       src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCcUbHMTn2FZlsn7kaljhVKSy0L5IfZKxs&sensor=true&libraries=visualization">
     </script>
-    <script type="text/javascript"
-      src="markerwithlabel.js">
-    </script>
     <script type="text/javascript">
       var markersArray = [];
       var locArray = [];
@@ -37,6 +34,8 @@
           };
           map = new google.maps.Map(document.getElementById("map_canvas"),
               mapOptions);
+
+
       }
 
 
@@ -48,12 +47,9 @@
             origin: new google.maps.Point(0,0)
 
           };
-
-
           var marker = new google.maps.Marker({
               position: myLatLng,
               icon: image,
-              labelContent: "A",
               labelAnchor: new google.maps.Point(3, 30),
               labelClass: "labels",
               labelInBackground: false,
