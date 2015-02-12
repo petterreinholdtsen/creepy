@@ -165,7 +165,7 @@ class Flickr(InputPlugin):
         if self.api is None:
             self.api = self.getAuthenticatedAPI()
         try:
-            results = self.api.people_getPublicPhotos(user_id=target['targetUserid'], extras="geo, date_taken",
+            results = self.api.people_getPublicPhotos(user_id=unicode(target['targetUserid']), extras="geo, date_taken",
                                                       per_page=500)
 
             if results.attrib['stat'] == 'ok':

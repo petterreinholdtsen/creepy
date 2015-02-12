@@ -30,6 +30,7 @@ class Googleplus(InputPlugin):
 
     def __init__(self):
         #Try and read the labels file
+        self.http = httplib2.Http(ca_certs=os.path.join(os.getcwd(), 'cacerts.txt'))
         labels_config = self.getConfigObj(self.name+'.labels')
         try:
             logger.debug('Trying to load the labels file for the  {0} plugin .'.format(self.name))
@@ -74,12 +75,11 @@ class Googleplus(InputPlugin):
     def getAuthenticatedService(self):
         try:
             credentials = AccessTokenCredentials.new_from_json(self.options_string['hidden_credentials'])
-            http = httplib2.Http()
             if credentials.invalid:
-                http = credentials.refresh(http)
+                self.http = credentials.refresh(self.http)
             else:
-                http = credentials.authorize(http)
-            service = build('plus', 'v1', http=http)
+                self.http = credentials.authorize(self.http)
+            service = build('plus', 'v1', http=self.http)
             return service
         except Exception, e:
             logger.error(e)
@@ -129,7 +129,7 @@ class Googleplus(InputPlugin):
 
             if self.wizard.exec_():
                 try:
-                    credentials = flow.step2_exchange(str(self.wizard.field('inputCode').toString()).strip())
+                    credentials = flow.step2_exchange(str(self.wizard.field('inputCode').toString()).strip(), self.http)
                     self.options_string['hidden_credentials'] = credentials.to_json()
                     self.config.write()
                 except Exception, err:
