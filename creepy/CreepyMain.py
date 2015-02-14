@@ -107,7 +107,7 @@ class MainWindow(QMainWindow):
             self.emit(SIGNAL('locations(PyQt_PyObject)'), self.project)
 
     def __init__(self, parent=None):
-        self.version = "1.1"
+        self.version = "1.3"
         QWidget.__init__(self, parent)
         self.ui = Ui_CreepyMainWindow()
         self.ui.setupUi(self)
