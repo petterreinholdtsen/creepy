@@ -41,20 +41,15 @@
 
       function addMarker(lat, lng, context, plugin) {
           var myLatLng = new google.maps.LatLng(lat, lng);
-          var image = {
-            url: '../plugins/'+plugin+'/marker.png',
-            size: new google.maps.Size(51, 51),
-            origin: new google.maps.Point(0,0)
-
-          };
           var marker = new google.maps.Marker({
               position: myLatLng,
-              icon: image,
+              icon: "http://jkakavas.github.io/creepy/"+plugin+"_marker.png",
               labelAnchor: new google.maps.Point(3, 30),
               labelClass: "labels",
               labelInBackground: false,
               map: map
           });
+		 
 
           google.maps.event.addListener(marker, 'click', function() {
               infowindow.setContent(context)
