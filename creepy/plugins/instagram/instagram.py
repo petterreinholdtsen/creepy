@@ -11,10 +11,10 @@ from PyQt4.QtGui import QLabel, QLineEdit, QWizard, QWizardPage, QVBoxLayout, QM
 from instagram.client import InstagramAPI
 from models.InputPlugin import InputPlugin
 from utilities import GeneralUtilities
-#set up logging
+# set up logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler(os.path.join(GeneralUtilities.getLogDir(),'creepy_main.log'))
+fh = logging.FileHandler(os.path.join(GeneralUtilities.getLogDir(), 'creepy_main.log'))
 fh.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(levelname)s:%(asctime)s  In %(filename)s:%(lineno)d: %(message)s')
 fh.setFormatter(formatter)
@@ -22,20 +22,19 @@ logger.addHandler(fh)
 
 
 class Instagram(InputPlugin):
-    
     name = "instagram"
     hasWizard = True
-    
+
     def __init__(self):
-        #Try and read the labels file
-        labels_config = self.getConfigObj(self.name+'.labels')
+        # Try and read the labels file
+        labels_config = self.getConfigObj(self.name + '.labels')
         try:
-            logger.debug("Trying to load the labels file for the  "+self.name+" plugin .")
+            logger.debug("Trying to load the labels file for the  " + self.name + " plugin .")
             self.labels = labels_config['labels']
-        except Exception,err:
-            self.labels = None 
-            logger.error("Could not load the labels file for the  "+self.name+" plugin .")  
-            logger.exception(err) 
+        except Exception, err:
+            self.labels = None
+            logger.error("Could not load the labels file for the  " + self.name + " plugin .")
+            logger.exception(err)
         self.config, self.options_string = self.readConfiguration("string_options")
         self.api = None
 
@@ -50,17 +49,17 @@ class Instagram(InputPlugin):
             return True, ""
         except Exception, err:
             return False, err.error_message
-    
+
     def searchForTargets(self, search_term):
-        logger.debug("Attempting to search for targets. Search term was : "+search_term)
+        logger.debug("Attempting to search for targets. Search term was : " + search_term)
         possibleTargets = []
         try:
             if self.api is None:
                 self.api = self.getAuthenticatedAPI()
             results = self.api.user_search(q=search_term)
-            
+
             for i in results:
-                target = {'pluginName':'Instagram Plugin'}
+                target = {'pluginName': 'Instagram Plugin'}
                 target['targetUserid'] = i.id
                 target['targetUsername'] = i.username
                 target['targetPicture'] = 'profile_pic_%s' % i.id
@@ -71,31 +70,31 @@ class Instagram(InputPlugin):
                 if not os.path.exists(temp_file):
                     urllib.urlretrieve(i.profile_picture, temp_file)
                 possibleTargets.append(target)
-            logger.debug(str(len(possibleTargets))+" possible targets were found matching the search query")
+            logger.debug(str(len(possibleTargets)) + " possible targets were found matching the search query")
         except Exception, err:
             logger.error("Error searching for targets with instagram plugin.")
             logger.error(err)
         return possibleTargets
-   
+
     def getAllPhotos(self, uid, count, max_id, photos):
-        logger.debug("Attempting to retrieve all photos for user "+uid)
+        logger.debug("Attempting to retrieve all photos for user " + uid)
         if self.api is None:
             self.api = self.getAuthenticatedAPI()
         new_photos, next1 = self.api.user_recent_media(user_id=uid, count=count, max_id=max_id)
         if new_photos:
-            logger.debug("found "+str(len(new_photos))+ " photos")
+            logger.debug("found " + str(len(new_photos)) + " photos")
             photos.extend(new_photos)
-            logger.debug("we now have "+str(len(photos))+ " photos")
+            logger.debug("we now have " + str(len(photos)) + " photos")
         if not next1:
             logger.debug("finished, got all photos")
             return photos
         else:
             a = parse_qs(urlparse(next1).query)
-            logger.debug("found more , max_id will now be "+a['max_id'][0])
+            logger.debug("found more , max_id will now be " + a['max_id'][0])
             return self.getAllPhotos(uid, count, a['max_id'][0], photos)
-        
+
     def returnAnalysis(self, target, search_params):
-        logger.debug("Attempting to retrieve all photos for user "+target['targetUserid'])
+        logger.debug("Attempting to retrieve all photos for user " + target['targetUserid'])
         locations_list = []
         try:
             if self.api is None:
@@ -111,34 +110,34 @@ class Instagram(InputPlugin):
                     loc['lat'] = i.location.point.latitude
                     loc['lon'] = i.location.point.longitude
                     loc['shortName'] = i.location.name
-                    locations_list.append(loc) 
-            logger.debug(str(len(locations_list))+ " locations have been retrieved")
+                    locations_list.append(loc)
+            logger.debug(str(len(locations_list)) + " locations have been retrieved")
         except Exception, err:
             logger.error(err)
-            logger.error("Error getting locations from instagram plugin")    
+            logger.error("Error getting locations from instagram plugin")
         return locations_list, None
-        
-    
-    
+
     def runConfigWizard(self):
         try:
-            api = InstagramAPI(client_id=self.options_string['hidden_client_id'], client_secret=self.options_string['hidden_client_secret'], redirect_uri=self.options_string['redirect_uri'])
+            api = InstagramAPI(client_id=self.options_string['hidden_client_id'],
+                               client_secret=self.options_string['hidden_client_secret'],
+                               redirect_uri=self.options_string['redirect_uri'])
             url = api.get_authorize_login_url()
-            print url
-            
-
             self.wizard = QWizard()
             page1 = QWizardPage()
             layout1 = QVBoxLayout()
-            txtArea = QTextEdit()
-            txtArea.setReadOnly(True)
-            txtArea.setText("Please copy the following link to your browser window. \n \n"+
-                            url +"\n \n"
-                            "Once you authenticate with Instagram you will be redirected to www.geocreepy.com and get your token. Copy the token to the input field below:");
+            txtArea = QLabel()
+            txtArea.setText("Please copy the following link to your browser window. \n " +
+                                  "Once you authenticate with Instagram you will be redirected to www.geocreepy.com and get your token. Copy the token to the input field below:")
+            urlArea = QLineEdit()
+            urlArea.setObjectName('urlArea')
+            urlArea.setText(url)
             inputLink = QLineEdit()
             inputLink.setObjectName("inputLink")
-            labelLink = QLabel("Yout token value:")
+            labelLink = QLabel("Your token value:")
             layout1.addWidget(txtArea)
+            layout1.addWidget(urlArea)
+            layout1.addWidget(labelLink)
             layout1.addWidget(inputLink)
             page1.setLayout(layout1)
             self.wizard.addPage(page1)
@@ -151,29 +150,32 @@ class Instagram(InputPlugin):
                         self.options_string['hidden_access_token'] = access_token[0]
                         self.config.write()
                     except Exception, err:
-                        self.showWarning("Error Getting Access Token", "Please verify that the link you pasted was correct. Try running the wizard again.")
+                        self.showWarning("Error Getting Access Token",
+                                         "Please verify that the link you pasted was correct. Try running the wizard again.")
                 else:
-                    self.showWarning("Error Getting Access Token", "Please verify that the link you pasted was correct. Try running the wizard again.")
-            
-        except Exception,err:
+                    self.showWarning("Error Getting Access Token",
+                                     "Please verify that the link you pasted was correct. Try running the wizard again.")
+
+        except Exception, err:
             logger.exception(err)
-    
+
     def parseRedirectUrl(self, link):
         try:
             return parse_qs(urlparse(link).query)['code'][0]
         except Exception, err:
             logger.error(err)
             return None
-        
+
     def showWarning(self, title, text):
         QMessageBox.warning(self.wizard, title, text)
-        
+
     def constructContextInfoWindow(self, photo):
         html = unicode(self.options_string['infowindow_html'], 'utf-8')
         caption = photo.caption.text if photo.caption else unicode('No Caption', 'utf-8')
-        return html.replace("@TEXT@", caption).replace("@DATE@", pytz.utc.localize(photo.created_time).strftime("%Y-%m-%d %H:%M:%S %z")).replace("@PLUGIN@", u"instagram").replace("@LINK@", photo.link)
-    
-    
+        return html.replace("@TEXT@", caption).replace("@DATE@", pytz.utc.localize(photo.created_time).strftime(
+            "%Y-%m-%d %H:%M:%S %z")).replace("@PLUGIN@", u"instagram").replace("@LINK@", photo.link)
+
+
     def getLabelForKey(self, key):
         '''
         read the plugin_name.labels 

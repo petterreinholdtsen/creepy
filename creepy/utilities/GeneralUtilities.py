@@ -22,7 +22,8 @@ def getIncludeDir():
 
 def getLogDir():
     logdir = expanduser("~/.creepy")
-    try: os.makedirs(logdir)
+    try:
+        os.makedirs(logdir)
     except OSError as e:
         if e.errno == errno.EEXIST and os.path.isdir(logdir):
             pass
@@ -32,8 +33,12 @@ def getLogDir():
 
 
 def getPluginDirs():
-#    return ["/usr/share/creepy/plugins", os.path.join(os.getcwd(), 'plugins')]
-     return [os.path.join(os.getcwd(), 'plugins')]
+    if os.path.exists("/usr/share/creepy/plugins"):
+        # if creepy is installed via debian package
+        return ["/usr/share/creepy/plugins", os.path.join(os.getcwd(), 'plugins')]
+    else:
+        return [os.path.join(os.getcwd(), 'plugins')]
+
 
 def reportProblem():
     webbrowser.open_new_tab('https://github.com/jkakavas/creepy/issues')

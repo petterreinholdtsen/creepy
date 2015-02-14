@@ -45,8 +45,8 @@ formatter = logging.Formatter('%(levelname)s:%(asctime)s  In %(filename)s:%(line
 fh.setFormatter(formatter)
 logger.addHandler(fh)
 # Capture stderr and stdout to a file
-#sys.stdout = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stdout.log'), 'w')
-#sys.stderr = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stderr.log'), 'w')
+sys.stdout = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stdout.log'), 'w')
+sys.stderr = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stderr.log'), 'w')
 try:
     _fromUtf8 = QString.fromUtf8
 except AttributeError:
