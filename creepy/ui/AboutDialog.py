@@ -55,6 +55,6 @@ class Ui_aboutDialog(object):
 
     def retranslateUi(self, aboutDialog):
         aboutDialog.setWindowTitle(_translate("aboutDialog", "About", None))
-        self.label.setText(_translate("aboutDialog", "<html><head/><body><p align=\"center\"><img src=\":/creepy/creepy\"/></p><p><br/></p><p align=\"center\"><span style=\" font-size:9pt;\">Creepy is a geolocation OSINT tool. </span></p><p><br/></p><p><span style=\" font-weight:600;\">Version : </span>1.2 - Codename &quot;<span style=\" font-style:italic;\">SKUP</span>&quot;</p><p><span style=\" font-weight:600;\">Author</span> : Ioannis Kakavas &lt; jkakavas@gmail.com &gt;</p><p><span style=\" font-weight:600;\">Website</span>: www.geocreepy.com</p></body></html>", None))
+        self.label.setText(_translate("aboutDialog", "<html><head/><body><p align=\"center\"><img src=\":/creepy/creepy\"/></p><p><br/></p><p align=\"center\"><span style=\" font-size:9pt;\">Creepy is a geolocation OSINT tool. </span></p><p><br/></p><p><span style=\" font-weight:600;\">Version : </span>1.3 - Codename &quot;<span style=\" font-style:italic;\">Athens</span>&quot;</p><p><span style=\" font-weight:600;\">Author</span> : Ioannis Kakavas &lt; jkakavas@gmail.com &gt;</p><p><span style=\" font-weight:600;\">Website</span>: www.geocreepy.com</p></body></html>", None))
 
 import creepy_resources_rc
