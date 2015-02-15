@@ -193,6 +193,7 @@ class Flickr(InputPlugin):
             authorizationURL = flickr.auth_url(perms=u'read')
 
             self.wizard = QWizard()
+            self.wizard.setWindowTitle("Flickr plugin configuration wizard")
             page1 = QWizardPage()
             page2 = QWizardPage()
             layout1 = QVBoxLayout()

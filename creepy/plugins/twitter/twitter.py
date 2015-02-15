@@ -87,6 +87,7 @@ class Twitter(InputPlugin):
             oAuthHandler = tweepy.OAuthHandler(self.options_string['hidden_application_key'], self.options_string['hidden_application_secret'])
             authorizationURL = oAuthHandler.get_authorization_url(True)
             self.wizard = QWizard()
+            self.wizard.setWindowTitle("Twitter plugin configuration wizard")
             page1 = QWizardPage()
             page2 = QWizardPage()
             layout1 = QVBoxLayout()

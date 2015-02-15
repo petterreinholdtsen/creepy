@@ -124,6 +124,7 @@ class Instagram(InputPlugin):
                                redirect_uri=self.options_string['redirect_uri'])
             url = api.get_authorize_login_url()
             self.wizard = QWizard()
+            self.wizard.setWindowTitle("Instagram plugin configuration wizard")
             page1 = QWizardPage()
             layout1 = QVBoxLayout()
             txtArea = QLabel()

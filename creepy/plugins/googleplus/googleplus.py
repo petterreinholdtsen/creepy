@@ -94,6 +94,7 @@ class Googleplus(InputPlugin):
                                        redirect_uri='urn:ietf:wg:oauth:2.0:oob')
             authorizationURL = flow.step1_get_authorize_url()
             self.wizard = QWizard()
+            self.wizard.setWindowTitle("Google+ plugin configuration wizard")
             page1 = QWizardPage()
             page2 = QWizardPage()
             layout1 = QVBoxLayout()
