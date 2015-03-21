@@ -1,7 +1,7 @@
 # creepy
 
 ### Current Version 
-1.1
+1.3
 
 ### Author 
 Yiannis Kakavas <jkakavas__AT__gmail__dot__com>
@@ -21,12 +21,10 @@ Creepy is a geolocation OSINT tool. Gathers geolocation related information from
 
 Creepy icon : © "eye of sauron" image by blood-solice on deviantart ( http://blood-solice.deviantart.com )
 
-[@dstergiou] (https://www.twitter.com/dstergiou "@dstergiou") for helping with OSX packaging
-
-[@epsilon77] (https://www.twitter.com/epsilon77 "@epsilon77") , the maintainer of the debian package
+To Penny for creating the new plugin specific markers 
 
 ### Attribution 
-Icons in version 1.1 are selected icons from the icon set 
+Icons in version 1.3 are selected icons from the icon set 
 
 Fugue Icons
 
