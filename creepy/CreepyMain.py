@@ -12,8 +12,10 @@ import pytz
 from components import creepy_resources_compiled
 from distutils.version import StrictVersion
 from PyQt4.QtCore import QString, QThread, SIGNAL, QUrl, QDateTime, QDate, QRect, Qt
-from PyQt4.QtGui import QMainWindow, QApplication, QMessageBox, QFileDialog, QWidget, QScrollArea, QVBoxLayout, QIcon, QTableWidgetItem, QAbstractItemView
-from PyQt4.QtGui import QHBoxLayout, QLabel, QLineEdit, QCheckBox, QPushButton, QStackedWidget, QGridLayout, QMenu, QPixmap
+from PyQt4.QtGui import QMainWindow, QApplication, QMessageBox, QFileDialog, QWidget, QScrollArea, QVBoxLayout, QIcon, \
+    QTableWidgetItem, QAbstractItemView
+from PyQt4.QtGui import QHBoxLayout, QLabel, QLineEdit, QCheckBox, QPushButton, QStackedWidget, QGridLayout, QMenu, \
+    QPixmap
 from PyQt4.QtWebKit import QWebPage, QWebSettings
 from dominate import document
 from ui.CreepyUI import Ui_CreepyMainWindow
@@ -34,8 +36,11 @@ from components.FilterLocationsCustomDialog import FilterLocationsCustomDialog
 from components.AboutDialog import AboutDialog
 from components.VerifyDeleteDialog import VerifyDeleteDialog
 from components.UpdateCheckDialog import UpdateCheckDialog
-from utilities import GeneralUtilities
+from utilities import GeneralUtilities, QtHandler
 from dominate.tags import *
+from utilities import XStream
+
+
 # set up logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -43,7 +48,10 @@ fh = logging.FileHandler(os.path.join(GeneralUtilities.getLogDir(), 'creepy_main
 fh.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(levelname)s:%(asctime)s  In %(filename)s:%(lineno)d: %(message)s')
 fh.setFormatter(formatter)
+guiLoggingHandler = QtHandler.QtHandler()
+guiLoggingHandler.setFormatter(formatter)
 logger.addHandler(fh)
+logger.addHandler(guiLoggingHandler)
 # Capture stderr and stdout to a file
 sys.stdout = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stdout.log'), 'w')
 sys.stderr = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stderr.log'), 'w')
@@ -71,11 +79,13 @@ class MainWindow(QMainWindow):
             menuDiv = div(id='menu', cls='pure-menu pure-menu-open pure-menu-horizontal')
             menuDivList = ul()
             for target in self.project.selectedTargets:
-                menuDivList += li(a(str(target['pluginName']), href='#'+str(target['pluginName'])), __inline=True)
+                menuDivList += li(a(str(target['pluginName']), href='#' + str(target['pluginName'])), __inline=True)
                 menuDiv.add(menuDivList)
             analysisDocument.add(menuDiv)
+            # If this is a person based project
             for target in self.project.selectedTargets:
                 pluginObject = pluginManager.getPluginByName(target['pluginName'], 'Input').plugin_object
+                print ",".join(target['poi'])
                 for pl in self.project.enabledPlugins:
                     if pl['pluginName'] == target['pluginName']:
                         runtimeConfig = pl['searchOptions']
@@ -101,7 +111,7 @@ class MainWindow(QMainWindow):
                     self.project.locations.append(l)
             # sort on date 
             self.project.locations.sort(key=lambda x: x.datetime, reverse=True)
-            #Add analysis document on project
+            # Add analysis document on project
 
             self.project.analysisDocument = analysisDocument
             self.emit(SIGNAL('locations(PyQt_PyObject)'), self.project)
@@ -111,7 +121,7 @@ class MainWindow(QMainWindow):
         QWidget.__init__(self, parent)
         self.ui = Ui_CreepyMainWindow()
         self.ui.setupUi(self)
-        #Create folders for projects and temp if they do not exist
+        # Create folders for projects and temp if they do not exist
         if not os.path.exists(os.path.join(os.getcwd(), 'projects')):
             os.makedirs(os.path.join(os.getcwd(), 'projects'))
         if not os.path.exists(os.path.join(os.getcwd(), 'temp')):
@@ -126,7 +136,7 @@ class MainWindow(QMainWindow):
         self.ui.menuView.addAction(self.ui.dockWProjects.toggleViewAction())
         self.ui.menuView.addAction(self.ui.dockWLocationsList.toggleViewAction())
         self.ui.menuView.addAction(self.ui.dockWCurrentLocationDetails.toggleViewAction())
-        #Connect all the signals
+        # Connect all the signals
         self.ui.actionPluginsConfiguration.triggered.connect(self.showPluginsConfigurationDialog)
         self.ui.actionNewPersonProject.triggered.connect(self.showPersonProjectWizard)
         self.ui.actionAnalyzeCurrentProject.triggered.connect(self.analyzeProject)
@@ -154,17 +164,18 @@ class MainWindow(QMainWindow):
         self.ui.locationsTableView.clicked.connect(self.updateCurrentLocationDetails)
         self.ui.locationsTableView.activated.connect(self.updateCurrentLocationDetails)
         self.ui.locationsTableView.doubleClicked.connect(self.doubleClickLocationItem)
-        #default to showing the map
+        XStream.XStream.stdout().messageWritten.connect( self.ui.loggingContents.insertPlainText )
+        XStream.XStream.stderr().messageWritten.connect( self.ui.loggingContents.insertPlainText )
+        # default to showing the map
         self.changeMainWidgetPage('map')
         self.loadProjectsFromStorage()
-        #If option enabled check for updated version
 
     def checkForUpdatedVersion(self):
-        '''
+        """
         Checks www.geocreepy.com for an updated version and returns a tuple with the 
         result and the latest version number
         
-        '''
+        """
 
         try:
             latestVersion = urllib2.urlopen("http://www.geocreepy.com/version.html").read().rstrip()
@@ -223,11 +234,13 @@ class MainWindow(QMainWindow):
         filterLocationsDateDialog.ui.endDateCalendarWidget.setMaximumDate(QDate.currentDate())
         filterLocationsDateDialog.show()
         if filterLocationsDateDialog.exec_():
-            startDateTime = pytz.utc.localize(QDateTime(filterLocationsDateDialog.ui.stardateCalendarWidget.selectedDate(),
-                                      filterLocationsDateDialog.ui.startDateTimeEdit.time()).toPyDateTime())
+            startDateTime = pytz.utc.localize(
+                QDateTime(filterLocationsDateDialog.ui.stardateCalendarWidget.selectedDate(),
+                          filterLocationsDateDialog.ui.startDateTimeEdit.time()).toPyDateTime())
             endDateTime = pytz.utc.localize(QDateTime(filterLocationsDateDialog.ui.endDateCalendarWidget.selectedDate(),
-                                    filterLocationsDateDialog.ui.endDateTimeEdit.time()).toPyDateTime())
-            logger.debug("Filtering based on dates between : "+startDateTime.strftime('%Y-%m-%d %H:%M:%S %z')+"  "+endDateTime.strftime('%Y-%m-%d %H:%M:%S %z'))
+                                                      filterLocationsDateDialog.ui.endDateTimeEdit.time()).toPyDateTime())
+            logger.debug("Filtering based on dates between : " + startDateTime.strftime(
+                '%Y-%m-%d %H:%M:%S %z') + "  " + endDateTime.strftime('%Y-%m-%d %H:%M:%S %z'))
             if startDateTime > endDateTime:
                 self.showWarning(self.trUtf8('Invalid Dates'), self.trUtf8(
                     'The start date needs to be before the end date.<p> Please try again ! </p>'))
@@ -242,16 +255,20 @@ class MainWindow(QMainWindow):
         daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         for dayOfWeek in daysOfWeek:
             filterLocationsCustomDialog.ui.daysOfWeekListWidget.addItem(dayOfWeek)
-        monthsOfYear = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+        monthsOfYear = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
+                        'October', 'November', 'December']
         for monthOfYear in monthsOfYear:
             filterLocationsCustomDialog.ui.monthsOfYearListWidget.addItem(monthOfYear)
         for hourOfDay in range(24):
             filterLocationsCustomDialog.ui.hoursOfDayListWidget.addItem(str(hourOfDay))
         if filterLocationsCustomDialog.exec_():
             t = filterLocationsCustomDialog.ui.daysOfWeekListWidget.selectedItems()
-            days = [daysOfWeek.index(str(selItem.text())) for selItem in filterLocationsCustomDialog.ui.daysOfWeekListWidget.selectedItems()]
-            hours = [int(selItem.text()) for selItem in filterLocationsCustomDialog.ui.hoursOfDayListWidget.selectedItems()]
-            months = [monthsOfYear.index(str(selItem.text()))+1 for selItem in filterLocationsCustomDialog.ui.monthsOfYearListWidget.selectedItems()]
+            days = [daysOfWeek.index(str(selItem.text())) for selItem in
+                    filterLocationsCustomDialog.ui.daysOfWeekListWidget.selectedItems()]
+            hours = [int(selItem.text()) for selItem in
+                     filterLocationsCustomDialog.ui.hoursOfDayListWidget.selectedItems()]
+            months = [monthsOfYear.index(str(selItem.text())) + 1 for selItem in
+                      filterLocationsCustomDialog.ui.monthsOfYearListWidget.selectedItems()]
             if len(days) == 0 and len(hours) == 0 and len(months) == 0:
                 self.showWarning(self.trUtf8('Invalid Selection'), self.trUtf8(
                     'Please select at least one of the criteria ! </p>'))
@@ -379,8 +396,9 @@ class MainWindow(QMainWindow):
                 linesList.append('"Timestamp","Latitude","Longitude","Location Name","Retrieved from","Context"')
                 for loc in project.locations:
                     if (filtering and loc.visible) or not filtering:
-                        linesList.append(u'"{0:s}","{1:s}","{2:s}","{3:s}","{4:s}","{5:s}"'.format(loc.datetime.strftime('%Y-%m-%d %H:%M:%S %z'), str(loc.latitude), str(loc.longitude),
-                                    loc.shortName, loc.plugin, loc.context))
+                        linesList.append(u'"{0:s}","{1:s}","{2:s}","{3:s}","{4:s}","{5:s}"'.format(
+                            loc.datetime.strftime('%Y-%m-%d %H:%M:%S %z'), str(loc.latitude), str(loc.longitude),
+                            loc.shortName, loc.plugin, loc.context))
                 csv_string = '\n'.join(linesList)
                 fileobj.write(csv_string)
                 fileobj.close()
@@ -423,7 +441,8 @@ class MainWindow(QMainWindow):
                         kml.append('    </description>')
                         kml.append('    <Point>')
                         kml.append(
-                            '       <coordinates>{0:s}, {1:s}, 0</coordinates>'.format(str(loc.longitude), str(loc.latitude)))
+                            '       <coordinates>{0:s}, {1:s}, 0</coordinates>'.format(str(loc.longitude),
+                                                                                       str(loc.latitude)))
                         kml.append('    </Point>')
                         kml.append('  </Placemark>')
                 kml.append('</Document>')
@@ -438,10 +457,10 @@ class MainWindow(QMainWindow):
                 self.ui.statusbar.showMessage(self.trUtf8('Error saving the export.'))
 
     def analyzeProject(self, project):
-        '''
+        """
         This is called when the user clicks on "Analyze Target". It starts the background thread that
         analyzes targets and returns locations
-        '''
+        """
         # If the project was not provided explicitly, analyze the currently selected one
         if not project:
             project = self.currentProject
@@ -492,7 +511,8 @@ class MainWindow(QMainWindow):
             else:
                 analysisDocument = self.currentProject.analysisDocument
         analysisFrame = self.ui.analysisWebPage.mainFrame()
-        analysisFrame.setHtml(QString(unicode(analysisDocument)), QUrl('file://'+os.path.join(os.getcwd(), 'include/')))
+        analysisFrame.setHtml(QString(unicode(analysisDocument)),
+                              QUrl('file://' + os.path.join(os.getcwd(), 'include/')))
 
     def presentLocations(self, locations):
         """
@@ -754,9 +774,9 @@ class MainWindow(QMainWindow):
             self.presentAnalysis(None)
 
     def showRightClickMenu(self, pos):
-        '''
+        """
         Called when the user right-clicks somewhere in the area of the existing projects
-        '''
+        """
 
         # We will not allow multi select so the selectionModel().selection().indexes() will contain only one
         if self.ui.treeViewProjects.selectionModel().selection().count() == 1:
@@ -764,7 +784,7 @@ class MainWindow(QMainWindow):
             if nodeObject.nodeType() == 'PROJECT':
                 # First make this the current project
                 self.currentProject = nodeObject.project
-                #now depending on if the project is analyzed or not add actions to the menu
+                # now depending on if the project is analyzed or not add actions to the menu
                 rightClickMenu = QMenu()
                 if nodeObject.project.locations:
                     rightClickMenu.addAction(self.ui.actionReanalyzeCurrentProject)
@@ -786,4 +806,3 @@ if __name__ == '__main__':
     myapp = MainWindow()
     myapp.show()
     sys.exit(app.exec_())
-
