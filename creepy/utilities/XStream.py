@@ -3,7 +3,7 @@ import sys
 from PyQt4.QtCore import QObject,\
                          pyqtSignal
 
-class XStream(QtCore.QObject):
+class XStream(QObject):
     _stdout = None
     _stderr = None
     messageWritten = pyqtSignal(str)
