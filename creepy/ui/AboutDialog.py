@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Development/python/creepy/gui/aboutDialog.ui'
+# Form implementation generated from reading ui file 'gui/aboutDialog.ui'
 #
-# Created: Thu Oct 16 21:10:48 2014
-#      by: PyQt4 UI code generator 4.10.4
+# Created: Sun Oct 18 00:32:53 2015
+#      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -55,6 +55,16 @@ class Ui_aboutDialog(object):
 
     def retranslateUi(self, aboutDialog):
         aboutDialog.setWindowTitle(_translate("aboutDialog", "About", None))
-        self.label.setText(_translate("aboutDialog", "<html><head/><body><p align=\"center\"><img src=\":/creepy/creepy\"/></p><p><br/></p><p align=\"center\"><span style=\" font-size:9pt;\">Creepy is a geolocation OSINT tool. </span></p><p><br/></p><p><span style=\" font-weight:600;\">Version : </span>1.3 - Codename &quot;<span style=\" font-style:italic;\">Athens</span>&quot;</p><p><span style=\" font-weight:600;\">Author</span> : Ioannis Kakavas &lt; jkakavas@gmail.com &gt;</p><p><span style=\" font-weight:600;\">Website</span>: www.geocreepy.com</p></body></html>", None))
+        self.label.setText(_translate("aboutDialog", "<html><head/><body><p align=\"center\"><img src=\":/creepy/creepy\"/></p><p><br/></p><p align=\"center\"><span style=\" font-size:9pt;\">Creepy is </span><span style=\" font-size:9pt; font-style:italic;\">the</span><span style=\" font-size:9pt;\"> geolocation OSINT tool. </span></p><p><br/></p><p><span style=\" font-weight:600;\">Version : </span>1.4 - Codename &quot;GIJC&quot;</p><p><span style=\" font-weight:600;\">Author</span> : Ioannis Kakavas &lt; jkakavas@gmail.com &gt;</p><p><span style=\" font-weight:600;\">Website</span>: www.geocreepy.com</p></body></html>", None))
 
 import creepy_resources_rc
+
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    aboutDialog = QtGui.QDialog()
+    ui = Ui_aboutDialog()
+    ui.setupUi(aboutDialog)
+    aboutDialog.show()
+    sys.exit(app.exec_())
+

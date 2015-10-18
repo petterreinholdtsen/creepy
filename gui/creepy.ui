@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1473</width>
-    <height>862</height>
+    <width>1463</width>
+    <height>864</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -86,8 +86,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1473</width>
-     <height>25</height>
+     <width>1463</width>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuCreepy">
@@ -99,6 +99,7 @@
       <string>New Project</string>
      </property>
      <addaction name="actionNewPersonProject"/>
+     <addaction name="actionNewPlaceProject"/>
     </widget>
     <widget class="QMenu" name="menuExport">
      <property name="title">
@@ -141,6 +142,7 @@
     <addaction name="actionFilterLocationsDate"/>
     <addaction name="actionFilterLocationsPosition"/>
     <addaction name="actionRemoveFilters"/>
+    <addaction name="actionFilterInaccurateLocations"/>
    </widget>
    <addaction name="menuCreepy"/>
    <addaction name="menuEdit"/>
@@ -374,6 +376,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionNewPersonProject"/>
+   <addaction name="actionNewPlaceProject"/>
    <addaction name="actionPluginsConfiguration"/>
    <addaction name="actionAnalyzeCurrentProject"/>
    <addaction name="actionDrawCurrentProject"/>
@@ -394,8 +397,21 @@
    <addaction name="actionFilterLocationsCustom"/>
    <addaction name="actionFilterLocationsDate"/>
    <addaction name="actionFilterLocationsPosition"/>
+   <addaction name="actionFilterInaccurateLocations"/>
    <addaction name="actionShowHeatMap"/>
    <addaction name="actionRemoveFilters"/>
+  </widget>
+  <widget class="QDockWidget" name="dockWLogging">
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWLoggingContents">
+    <layout class="QVBoxLayout" name="verticalLayout_9">
+     <item>
+      <widget class="QTextEdit" name="loggingContents"/>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <action name="actionExportKML">
    <property name="checkable">
@@ -672,6 +688,24 @@
    </property>
    <property name="text">
     <string>Filter Locations ( Custom ) </string>
+   </property>
+  </action>
+  <action name="actionNewPlaceProject">
+   <property name="icon">
+    <iconset resource="../creepy/include/creepy_resources.qrc">
+     <normaloff>:/creepy/globe-green.png</normaloff>:/creepy/globe-green.png</iconset>
+   </property>
+   <property name="text">
+    <string>Place Based Project</string>
+   </property>
+  </action>
+  <action name="actionFilterInaccurateLocations">
+   <property name="icon">
+    <iconset resource="../creepy/include/creepy_resources.qrc">
+     <normaloff>:/creepy/marker_inaccurate.png</normaloff>:/creepy/marker_inaccurate.png</iconset>
+   </property>
+   <property name="text">
+    <string>Filter Inaccurate Locations</string>
    </property>
   </action>
  </widget>

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Development/python/creepy/gui/creepy.ui'
+# Form implementation generated from reading ui file 'gui/creepy.ui'
 #
-# Created: Thu Oct 16 18:56:30 2014
-#      by: PyQt4 UI code generator 4.10.4
+# Created: Tue Oct 13 22:01:13 2015
+#      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_CreepyMainWindow(object):
     def setupUi(self, CreepyMainWindow):
         CreepyMainWindow.setObjectName(_fromUtf8("CreepyMainWindow"))
-        CreepyMainWindow.resize(1473, 862)
+        CreepyMainWindow.resize(1463, 864)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -79,7 +79,7 @@ class Ui_CreepyMainWindow(object):
         self.verticalLayout_2.addWidget(self.centralStackedWidget)
         CreepyMainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(CreepyMainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1473, 25))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1463, 23))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuCreepy = QtGui.QMenu(self.menubar)
         self.menuCreepy.setObjectName(_fromUtf8("menuCreepy"))
@@ -233,6 +233,17 @@ class Ui_CreepyMainWindow(object):
         self.locationsActionsToolbar = QtGui.QToolBar(CreepyMainWindow)
         self.locationsActionsToolbar.setObjectName(_fromUtf8("locationsActionsToolbar"))
         CreepyMainWindow.addToolBar(QtCore.Qt.TopToolBarArea, self.locationsActionsToolbar)
+        self.dockWLogging = QtGui.QDockWidget(CreepyMainWindow)
+        self.dockWLogging.setObjectName(_fromUtf8("dockWLogging"))
+        self.dockWLoggingContents = QtGui.QWidget()
+        self.dockWLoggingContents.setObjectName(_fromUtf8("dockWLoggingContents"))
+        self.verticalLayout_9 = QtGui.QVBoxLayout(self.dockWLoggingContents)
+        self.verticalLayout_9.setObjectName(_fromUtf8("verticalLayout_9"))
+        self.loggingContents = QtGui.QTextEdit(self.dockWLoggingContents)
+        self.loggingContents.setObjectName(_fromUtf8("loggingContents"))
+        self.verticalLayout_9.addWidget(self.loggingContents)
+        self.dockWLogging.setWidget(self.dockWLoggingContents)
+        CreepyMainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(8), self.dockWLogging)
         self.actionExportKML = QtGui.QAction(CreepyMainWindow)
         self.actionExportKML.setCheckable(False)
         icon1 = QtGui.QIcon()
@@ -345,7 +356,18 @@ class Ui_CreepyMainWindow(object):
         icon15.addPixmap(QtGui.QPixmap(_fromUtf8(":/creepy/counter.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionFilterLocationsCustom.setIcon(icon15)
         self.actionFilterLocationsCustom.setObjectName(_fromUtf8("actionFilterLocationsCustom"))
+        self.actionNewPlaceProject = QtGui.QAction(CreepyMainWindow)
+        icon16 = QtGui.QIcon()
+        icon16.addPixmap(QtGui.QPixmap(_fromUtf8(":/creepy/globe-green.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionNewPlaceProject.setIcon(icon16)
+        self.actionNewPlaceProject.setObjectName(_fromUtf8("actionNewPlaceProject"))
+        self.actionFilterInaccurateLocations = QtGui.QAction(CreepyMainWindow)
+        icon17 = QtGui.QIcon()
+        icon17.addPixmap(QtGui.QPixmap(_fromUtf8(":/creepy/marker_inaccurate.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionFilterInaccurateLocations.setIcon(icon17)
+        self.actionFilterInaccurateLocations.setObjectName(_fromUtf8("actionFilterInaccurateLocations"))
         self.menuNewProject.addAction(self.actionNewPersonProject)
+        self.menuNewProject.addAction(self.actionNewPlaceProject)
         self.menuExport.addAction(self.actionExportKML)
         self.menuExport.addAction(self.actionExportCSV)
         self.menuExport.addAction(self.actionExportFilteredKML)
@@ -362,12 +384,14 @@ class Ui_CreepyMainWindow(object):
         self.menuFilters.addAction(self.actionFilterLocationsDate)
         self.menuFilters.addAction(self.actionFilterLocationsPosition)
         self.menuFilters.addAction(self.actionRemoveFilters)
+        self.menuFilters.addAction(self.actionFilterInaccurateLocations)
         self.menubar.addAction(self.menuCreepy.menuAction())
         self.menubar.addAction(self.menuEdit.menuAction())
         self.menubar.addAction(self.menuView.menuAction())
         self.menubar.addAction(self.menuFilters.menuAction())
         self.menubar.addAction(self.menuAbout.menuAction())
         self.mainToolbar.addAction(self.actionNewPersonProject)
+        self.mainToolbar.addAction(self.actionNewPlaceProject)
         self.mainToolbar.addAction(self.actionPluginsConfiguration)
         self.mainToolbar.addAction(self.actionAnalyzeCurrentProject)
         self.mainToolbar.addAction(self.actionDrawCurrentProject)
@@ -377,6 +401,7 @@ class Ui_CreepyMainWindow(object):
         self.locationsActionsToolbar.addAction(self.actionFilterLocationsCustom)
         self.locationsActionsToolbar.addAction(self.actionFilterLocationsDate)
         self.locationsActionsToolbar.addAction(self.actionFilterLocationsPosition)
+        self.locationsActionsToolbar.addAction(self.actionFilterInaccurateLocations)
         self.locationsActionsToolbar.addAction(self.actionShowHeatMap)
         self.locationsActionsToolbar.addAction(self.actionRemoveFilters)
 
@@ -443,6 +468,18 @@ class Ui_CreepyMainWindow(object):
         self.actionCompareProjects.setText(_translate("CreepyMainWindow", "Compare Projects", None))
         self.actionCompareProjects.setToolTip(_translate("CreepyMainWindow", "Compare two projects", None))
         self.actionFilterLocationsCustom.setText(_translate("CreepyMainWindow", "Filter Locations ( Custom ) ", None))
+        self.actionNewPlaceProject.setText(_translate("CreepyMainWindow", "Place Based Project", None))
+        self.actionFilterInaccurateLocations.setText(_translate("CreepyMainWindow", "Filter Inaccurate Locations", None))
 
 from PyQt4 import QtWebKit
 import creepy_resources_rc
+
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    CreepyMainWindow = QtGui.QMainWindow()
+    ui = Ui_CreepyMainWindow()
+    ui.setupUi(CreepyMainWindow)
+    CreepyMainWindow.show()
+    sys.exit(app.exec_())
+
