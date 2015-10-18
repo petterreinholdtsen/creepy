@@ -6,8 +6,9 @@ from yapsy.PluginManager import PluginManagerSingleton
 from models.InputPlugin import InputPlugin
 from ui.PluginsConfig import Ui_PluginsConfigurationDialog
 from components.PluginConfigurationCheckDialog import PluginConfigurationCheckdialog
+from components.PluginRatesCheckDialog import PluginRatesCheckDialog
 from utilities import GeneralUtilities
-
+from datetime import datetime
 
 class PluginsConfigurationDialog(QDialog):
     def __init__(self, parent=None):
@@ -24,7 +25,23 @@ class PluginsConfigurationDialog(QDialog):
         self.ui = Ui_PluginsConfigurationDialog()
         self.ui.setupUi(self)
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        
+
+    def getRateLimitStatus(self, plugin):
+        '''
+        Calls the getRateLimitStatus of the selected Plugin if it supports it and provides a popup window with the result
+        '''
+        checkPluginRatesDialog = PluginRatesCheckDialog()
+        if plugin.plugin_object.hasRateLimitInfo:
+            search, location, person = plugin.plugin_object.getRateLimitStatus('all')
+            checkPluginRatesDialog.ui.checkPluginRatesLabel.setText(self.trUtf8(
+                'You have {0} out of {1} API calls for searching users. Limit will be renewed on {2}\n'.format(search['remaining'], search['limit'], datetime.fromtimestamp(search['reset']).strftime("%Y-%m-%d %H:%M:%S %z")) +
+                'You have {0} out of {1} API calls for analyzing place based projects. Limit will be renewed on {2}\n'.format(location['remaining'], location['limit'], datetime.fromtimestamp(location['reset']).strftime("%Y-%m-%d %H:%M:%S %z")) +
+                'You have {0} out of {1} API calls for analyzing person based projects. Limit will be renewed on {2}\n'.format(person['remaining'], person['limit'], datetime.fromtimestamp(person['reset']).strftime("%Y-%m-%d %H:%M:%S %z"))
+            ))
+        else:
+            checkPluginRatesDialog.ui.checkPluginRatesLabel.setText(self.trUtf8('This plugin does not support this function.'))
+        checkPluginRatesDialog.exec_()
+
     def checkPluginConfiguration(self, plugin):
         '''
         Calls the isConfigured of the selected Plugin and provides a popup window with the result
@@ -37,7 +54,6 @@ class PluginsConfigurationDialog(QDialog):
         else:
             checkPluginConfigurationResultDialog.ui.checkPluginConfigurationResultLabel.setText(plugin.name + self.trUtf8(' is not correctly configured.') + isConfigured[1])
         checkPluginConfigurationResultDialog.exec_()
-    
          
     def saveConfiguration(self):  
         '''
