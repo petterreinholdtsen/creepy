@@ -19,14 +19,19 @@
     <script type="text/javascript"
       src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCcUbHMTn2FZlsn7kaljhVKSy0L5IfZKxs&sensor=true&libraries=visualization">
     </script>
-    <script type="text/javascript">
+    <script type="text/javascript" src="markerclustererplus.js"></script>
+    <script src="oms.js"></script>
+    <script>
       var markersArray = [];
       var locArray = [];
       var map = null;
       var heatmap = null;
-      var infowindow = new google.maps.InfoWindow({});
+
+      var markerClusterer = null;
+      var oms = null;
 
       function initialize() {
+          var infowindow = new google.maps.InfoWindow({});
           var mapOptions = {
               center: new google.maps.LatLng(38.448244914157165, 24.004483222961426),
               zoom: 2,
@@ -34,30 +39,41 @@
           };
           map = new google.maps.Map(document.getElementById("map_canvas"),
               mapOptions);
+          oms = new OverlappingMarkerSpiderfier(map, {markersWontMove: true, keepSpiderfied: true});
+
+          oms.addListener('click', function(marker) {
+              infowindow.setContent(marker.desc);
+              infowindow.open(map, marker);
+          });
+
+      }
+
+      function addMarker(lat, lng, context, plugin, accuracy) {
+          var myLatLng = new google.maps.LatLng(lat, lng);
+
+          var marker = new google.maps.Marker({
+              position: myLatLng,
+              icon: "http://jkakavas.github.io/creepy/"+plugin+"_marker_"+accuracy+".png",
+              labelAnchor: new google.maps.Point(3, 30),
+              labelClass: "labels",
+              labelInBackground: false,
+          });
+          marker.desc = context;
+          oms.addMarker(marker);
+
+
+//          google.maps.event.addListener(marker, 'click', function() {
+//              infowindow.setContent(context)
+//              infowindow.open(map, marker);
+//          });
+          markersArray.push(marker);
+          locArray.push(myLatLng);
 
 
       }
 
-
-      function addMarker(lat, lng, context, plugin) {
-          var myLatLng = new google.maps.LatLng(lat, lng);
-          var marker = new google.maps.Marker({
-              position: myLatLng,
-              icon: "http://jkakavas.github.io/creepy/"+plugin+"_marker.png",
-              labelAnchor: new google.maps.Point(3, 30),
-              labelClass: "labels",
-              labelInBackground: false,
-              map: map
-          });
-		 
-
-          google.maps.event.addListener(marker, 'click', function() {
-              infowindow.setContent(context)
-              infowindow.open(map, marker);
-          });
-          markersArray.push(marker);
-          locArray.push(myLatLng);
-
+      function refreshMap(){
+          markerClusterer = new MarkerClusterer(map, markersArray, { ignoreHidden: true, maxZoom: 16 })
       }
 
       function centerMap(lat, lng) {
@@ -74,19 +90,24 @@
               markersArray[i].setMap(null);
           }
           markersArray.length = 0;
-          locArray = [];
+          locArray.length = 0;
+          if (markerClusterer) {
+              markerClusterer.clearMarkers();
+          }
       }
 
       function hideMarkers() {
           for (var i = 0; i < markersArray.length; i++) {
               markersArray[i].setVisible(false);
           }
+          markerClusterer.repaint();
       }
 
       function showMarkers() {
           for (var i = 0; i < markersArray.length; i++) {
               markersArray[i].setVisible(true);
           }
+          markerClusterer.repaint();
       }
 
       function hideHeatmap() {
