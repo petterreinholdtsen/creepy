@@ -8,7 +8,7 @@ import logging
 import shelve
 import functools
 import urllib2
-import pytz
+import webbrowser
 from components import creepy_resources_compiled
 from distutils.version import StrictVersion
 from PyQt4.QtCore import QString, QThread, SIGNAL, QUrl, QDateTime, QDate, QRect, Qt
@@ -29,6 +29,7 @@ from models.ProjectWizardSelectedTargetsTable import ProjectWizardSelectedTarget
 from models.InputPlugin import InputPlugin
 from models.ProjectTree import ProjectNode, LocationsNode, ProjectTreeModel, ProjectTreeNode, AnalysisNode
 from components.PersonProjectWizard import PersonProjectWizard
+from components.PlaceProjectWizard import PlaceProjectWizard
 from components.PluginsConfigurationDialog import PluginsConfigurationDialog
 from components.FilterLocationsDateDialog import FilterLocationsDateDialog
 from components.FilterLocationsPointDialog import FilterLocationsPointDialog
@@ -53,8 +54,8 @@ guiLoggingHandler.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(guiLoggingHandler)
 # Capture stderr and stdout to a file
-sys.stdout = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stdout.log'), 'w')
-sys.stderr = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stderr.log'), 'w')
+# sys.stdout = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stdout.log'), 'w')
+# sys.stderr = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stderr.log'), 'w')
 try:
     _fromUtf8 = QString.fromUtf8
 except AttributeError:
@@ -67,6 +68,11 @@ class MainWindow(QMainWindow):
             QThread.__init__(self)
             self.project = project
 
+        def buildAnalysisPage(self):
+            analysisDocument = document()
+            analysisDocument.add(link(rel='stylesheet', href='http://yui.yahooapis.com/pure/0.5.0/pure-min.css'))
+            return analysisDocument
+
         def run(self):
             pluginManager = PluginManagerSingleton.get()
             pluginManager.setCategoriesFilter({'Input': InputPlugin})
@@ -74,22 +80,24 @@ class MainWindow(QMainWindow):
             pluginManager.locatePlugins()
             pluginManager.loadPlugins()
             locationsList = []
-            analysisDocument = document()
-            analysisDocument.add(link(rel='stylesheet', href='http://yui.yahooapis.com/pure/0.5.0/pure-min.css'))
+            analysisDocument = self.buildAnalysisPage()
             menuDiv = div(id='menu', cls='pure-menu pure-menu-open pure-menu-horizontal')
             menuDivList = ul()
             for target in self.project.selectedTargets:
                 menuDivList += li(a(str(target['pluginName']), href='#' + str(target['pluginName'])), __inline=True)
                 menuDiv.add(menuDivList)
             analysisDocument.add(menuDiv)
-            # If this is a person based project
             for target in self.project.selectedTargets:
                 pluginObject = pluginManager.getPluginByName(target['pluginName'], 'Input').plugin_object
-                print ",".join(target['poi'])
                 for pl in self.project.enabledPlugins:
                     if pl['pluginName'] == target['pluginName']:
                         runtimeConfig = pl['searchOptions']
-                targetLocations, targetAnalysisDiv = pluginObject.returnAnalysis(target, runtimeConfig)
+                if self.project.projectType == 'place':
+                    targetLocations = pluginObject.searchForResultsNearPlace(",".join(target['poi']))
+                    # No analysis page yet for place based projects
+                    targetAnalysisDiv = ''
+                else:
+                    targetLocations, targetAnalysisDiv = pluginObject.returnAnalysis(target, runtimeConfig)
                 if targetAnalysisDiv:
                     analysisDocument += targetAnalysisDiv
                 if targetLocations:
@@ -102,6 +110,8 @@ class MainWindow(QMainWindow):
                         location.context = loc['context']
                         location.infowindow = loc['infowindow']
                         location.shortName = loc['shortName']
+                        location.accuracy = loc['accuracy']
+                        location.username = loc['username']
                         location.updateId()
                         location.visible = True
                         locationsList.append(location)
@@ -109,15 +119,16 @@ class MainWindow(QMainWindow):
             for l in locationsList:
                 if l.id not in [loc.id for loc in self.project.locations]:
                     self.project.locations.append(l)
-            # sort on date 
+            # sort on date
             self.project.locations.sort(key=lambda x: x.datetime, reverse=True)
             # Add analysis document on project
-
             self.project.analysisDocument = analysisDocument
+            logger.debug('Analysis thread finished for all targets.')
+            # Emit the signal that we are done
             self.emit(SIGNAL('locations(PyQt_PyObject)'), self.project)
 
     def __init__(self, parent=None):
-        self.version = "1.3"
+        self.version = "1.4"
         QWidget.__init__(self, parent)
         self.ui = Ui_CreepyMainWindow()
         self.ui.setupUi(self)
@@ -130,6 +141,8 @@ class MainWindow(QMainWindow):
         self.currentProject = None
         self.ui.mapWebPage = QWebPage()
         self.ui.mapWebPage.mainFrame().setUrl(QUrl(os.path.join(GeneralUtilities.getIncludeDir(), 'map.html')))
+        self.ui.mapWebPage.setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
+        self.ui.mapWebPage.linkClicked.connect(self.linkClicked)
         self.ui.mapWebView.setPage(self.ui.mapWebPage)
         self.ui.analysisWebPage = QWebPage()
         self.ui.analysisWebView.setPage(self.ui.analysisWebPage)
@@ -139,6 +152,7 @@ class MainWindow(QMainWindow):
         # Connect all the signals
         self.ui.actionPluginsConfiguration.triggered.connect(self.showPluginsConfigurationDialog)
         self.ui.actionNewPersonProject.triggered.connect(self.showPersonProjectWizard)
+        self.ui.actionNewPlaceProject.triggered.connect(self.showPlaceProjectWizard)
         self.ui.actionAnalyzeCurrentProject.triggered.connect(self.analyzeProject)
         self.ui.actionReanalyzeCurrentProject.triggered.connect(self.analyzeProject)
         self.ui.actionDrawCurrentProject.triggered.connect(self.presentLocations)
@@ -151,6 +165,7 @@ class MainWindow(QMainWindow):
         self.ui.actionFilterLocationsDate.triggered.connect(self.showFilterLocationsDateDialog)
         self.ui.actionFilterLocationsPosition.triggered.connect(self.showFilterLocationsPointDialog)
         self.ui.actionFilterLocationsCustom.triggered.connect(self.showFilterLocationsCustomDialog)
+        self.ui.actionFilterInaccurateLocations.triggered.connect(self.filterOnlyAccurateLocations)
         self.ui.actionRemoveFilters.triggered.connect(self.removeAllFilters)
         self.ui.actionShowHeatMap.toggled.connect(self.toggleHeatMap)
         self.ui.actionReportProblem.triggered.connect(GeneralUtilities.reportProblem)
@@ -164,17 +179,17 @@ class MainWindow(QMainWindow):
         self.ui.locationsTableView.clicked.connect(self.updateCurrentLocationDetails)
         self.ui.locationsTableView.activated.connect(self.updateCurrentLocationDetails)
         self.ui.locationsTableView.doubleClicked.connect(self.doubleClickLocationItem)
-        XStream.XStream.stdout().messageWritten.connect( self.ui.loggingContents.insertPlainText )
-        XStream.XStream.stderr().messageWritten.connect( self.ui.loggingContents.insertPlainText )
+        XStream.XStream.stdout().messageWritten.connect(self.ui.loggingContents.insertPlainText)
+        XStream.XStream.stderr().messageWritten.connect(self.ui.loggingContents.insertPlainText)
         # default to showing the map
         self.changeMainWidgetPage('map')
         self.loadProjectsFromStorage()
 
     def checkForUpdatedVersion(self):
         """
-        Checks www.geocreepy.com for an updated version and returns a tuple with the 
+        Checks www.geocreepy.com for an updated version and returns a tuple with the
         result and the latest version number
-        
+
         """
 
         try:
@@ -309,6 +324,16 @@ class MainWindow(QMainWindow):
                 l.visible = False
         self.presentLocations([])
 
+    def filterOnlyAccurateLocations(self):
+        if not self.currentProject:
+            self.showWarning(self.trUtf8('No project selected'), self.trUtf8('Please select a project !'))
+            self.ui.statusbar.showMessage(self.trUtf8('Please select a project !'))
+            return
+        for l in self.currentProject.locations:
+            if l.accuracy == 'low':
+                l.visible = False
+        self.presentLocations([])
+
     def removeAllFilters(self):
         if not self.currentProject:
             self.showWarning(self.trUtf8('No project selected'), self.trUtf8('Please select a project !'))
@@ -345,8 +370,12 @@ class MainWindow(QMainWindow):
         mapFrame.evaluateJavaScript('showMarkers()')
 
     def addMarkerToMap(self, mapFrame, location):
-        mapFrame.evaluateJavaScript(QString('addMarker(' + str(location.latitude) + ',' + str(
-            location.longitude) + ',\"' + location.infowindow + '\",\"' + location.plugin + '\")'))
+        mapFrame.evaluateJavaScript(QString('addMarker(' + str(location.latitude) + ',' + str(location.longitude) +
+                                            ',\"' + location.infowindow + '\",\"' + location.plugin + '\",\"' +
+                                            location.accuracy + '\")'))
+
+    def refreshMap(self, mapFrame):
+        mapFrame.evaluateJavaScript(QString('refreshMap()'))
 
     def centerMap(self, mapFrame, location):
         mapFrame.evaluateJavaScript(
@@ -357,6 +386,9 @@ class MainWindow(QMainWindow):
 
     def clearMarkers(self, mapFrame):
         mapFrame.evaluateJavaScript(QString('clearMarkers()'))
+
+    def linkClicked(self, link):
+        webbrowser.open(link.toEncoded(), new=1)
 
     def deleteCurrentProject(self, project):
         if not project:
@@ -388,17 +420,19 @@ class MainWindow(QMainWindow):
             self.ui.statusbar.showMessage(self.trUtf8('The selected project has no locations to be exported'))
             return
         fileName = QFileDialog.getSaveFileName(None, self.trUtf8('Save CSV export as...'), os.getcwd(),
-                                               'All files (*.*)')
+                                               'CSV files (*.csv)')
         if fileName:
             try:
                 fileobj = codecs.open(fileName, 'wb', encoding='utf8')
                 linesList = []
-                linesList.append('"Timestamp","Latitude","Longitude","Location Name","Retrieved from","Context"')
+                linesList.append(
+                    '"Timestamp","Latitude","Longitude","Accuracy","Location Name","Retrieved from","Username","Context"')
                 for loc in project.locations:
                     if (filtering and loc.visible) or not filtering:
-                        linesList.append(u'"{0:s}","{1:s}","{2:s}","{3:s}","{4:s}","{5:s}"'.format(
+                        linesList.append(u'"{0:s}","{1:s}","{2:s}","{3:s}","{4:s}","{5:s}","{6:s}","{7:s}"'.format(
                             loc.datetime.strftime('%Y-%m-%d %H:%M:%S %z'), str(loc.latitude), str(loc.longitude),
-                            loc.shortName, loc.plugin, loc.context))
+                            loc.accuracy,
+                            loc.shortName, loc.plugin, loc.username, loc.context))
                 csv_string = '\n'.join(linesList)
                 fileobj.write(csv_string)
                 fileobj.close()
@@ -422,7 +456,7 @@ class MainWindow(QMainWindow):
             return
 
         fileName = QFileDialog.getSaveFileName(None, self.trUtf8('Save KML export as...'), os.getcwd(),
-                                               'All files (*.*)')
+                                               'KML files (*.kml)')
         if fileName:
             try:
                 fileobj = codecs.open(fileName, 'wb', encoding='utf8')
@@ -432,6 +466,24 @@ class MainWindow(QMainWindow):
                 kml.append('<kml xmlns=\"http://www.opengis.net/kml/2.2\">')
                 kml.append('<Document>')
                 kml.append('  <name>{0:s}.kml</name>'.format(project.projectName))
+                for plugin in project.enabledPlugins:
+                    plugin_name = plugin['pluginName'].lower().replace('plugin', '').rstrip()
+                    kml.append('  <Style id="{0}_high">'.format(plugin['pluginName']))
+                    kml.append('    <IconStyle>')
+                    kml.append('      <Icon>')
+                    kml.append(
+                        '        <href>http://jkakavas.github.io/creepy/{0}_marker_high.png</href>'.format(plugin_name))
+                    kml.append('      </Icon>')
+                    kml.append('    </IconStyle>')
+                    kml.append('  </Style>')
+                    kml.append('  <Style id="{0}_low">'.format(plugin_name))
+                    kml.append('    <IconStyle>')
+                    kml.append('      <Icon>')
+                    kml.append(
+                        '        <href>http://jkakavas.github.io/creepy/{0}_marker_low.png</href>'.format(plugin_name))
+                    kml.append('      </Icon>')
+                    kml.append('    </IconStyle>')
+                    kml.append('  </Style>')
                 for loc in project.locations:
                     if (filtering and loc.visible) or not filtering:
                         kml.append('  <Placemark>')
@@ -439,6 +491,7 @@ class MainWindow(QMainWindow):
 
                         kml.append(u'    <description> {0:s}'.format(GeneralUtilities.html_escape(loc.context)))
                         kml.append('    </description>')
+                        kml.append('    <styleUrl>#{0}_{1}</styleUrl>'.format(loc.plugin, loc.accuracy))
                         kml.append('    <Point>')
                         kml.append(
                             '       <coordinates>{0:s}, {1:s}, 0</coordinates>'.format(str(loc.longitude),
@@ -518,6 +571,7 @@ class MainWindow(QMainWindow):
         """
         Called when the user clicks on "Analyze Target". It redraws the map and populates the location list
         """
+        logger.debug('Attempting to draw locations for the current project')
         if not locations:
             if not self.currentProject:
                 self.showWarning(self.trUtf8('No project selected'), self.trUtf8('Please select a project !'))
@@ -533,6 +587,7 @@ class MainWindow(QMainWindow):
                 if location.visible:
                     visibleLocations.append(location)
                     self.addMarkerToMap(mapFrame, location)
+            self.refreshMap(mapFrame)
             if visibleLocations:
                 self.centerMap(mapFrame, visibleLocations[0])
                 self.setMapZoom(mapFrame, 15)
@@ -553,7 +608,7 @@ class MainWindow(QMainWindow):
 
     def updateCurrentLocationDetails(self, index):
         '''
-        Called when the user clicks on a location from the location list. It updates the information 
+        Called when the user clicks on a location from the location list. It updates the information
         displayed on the Current Target Details Window
         '''
         location = self.locationsTableModel.locations[index.row()]
@@ -573,25 +628,25 @@ class MainWindow(QMainWindow):
 
     def wizardButtonPressed(self, plugin):
         '''
-        This metod calls the wizard of the selected plugin and then reads again the configuration options from file
-        for that specific plugin. This happens in order to reflect any changes the wizard might have made to the configuration 
+        This method calls the wizard of the selected plugin and then reads again the configuration options from file
+        for that specific plugin. This happens in order to reflect any changes the wizard might have made to the configuration
         options.
         '''
+
         plugin.plugin_object.runConfigWizard()
         self.pluginsConfigurationDialog.close()
-        self.showPluginsConfigurationDialog()
+        self.showPluginsConfigurationDialog(selected=plugin.name)
 
-    def showPluginsConfigurationDialog(self):
-        '''
+    def showPluginsConfigurationDialog(self, selected=None):
+        """
         Reads the configuration options for all the plugins, builds the relevant UI items and adds them to the dialog
-        '''
+        """
         # Show the stackWidget
         self.pluginsConfigurationDialog = PluginsConfigurationDialog()
         self.pluginsConfigurationDialog.ui.ConfigurationDetails = QStackedWidget(self.pluginsConfigurationDialog)
         self.pluginsConfigurationDialog.ui.ConfigurationDetails.setGeometry(QRect(260, 10, 511, 561))
         self.pluginsConfigurationDialog.ui.ConfigurationDetails.setObjectName(_fromUtf8('ConfigurationDetails'))
         pl = []
-        a = self.pluginsConfigurationDialog.PluginManager.getAllPlugins()
         for plugin in sorted(self.pluginsConfigurationDialog.PluginManager.getAllPlugins(), key=lambda x: x.name):
             pl.append(plugin)
             '''
@@ -629,7 +684,7 @@ class MainWindow(QMainWindow):
                     vbox.addWidget(value, idx, 1)
                     gridLayoutRowIndex = idx + 1
             '''
-            Load the boolean options 
+            Load the boolean options
             '''
             pluginBooleanOptions = plugin.plugin_object.readConfiguration('boolean_options')[1]
             if pluginBooleanOptions != None:
@@ -656,6 +711,14 @@ class MainWindow(QMainWindow):
             layout.addWidget(scroll)
             layout.addStretch(1)
             pluginsConfigButtonContainer = QHBoxLayout()
+            rateStatusButton = QPushButton(self.trUtf8('Check Rate Limits'))
+            rateStatusButton.setObjectName(_fromUtf8('checkRateButton_' + plugin.name))
+            rateStatusButton.setToolTip(
+                self.trUtf8('Click here to get information about the plugin\'s API rate limits'))
+            rateStatusButton.resize(rateStatusButton.sizeHint())
+            rateStatusButton.clicked.connect(
+                functools.partial(self.pluginsConfigurationDialog.getRateLimitStatus, plugin)
+            )
             checkConfigButton = QPushButton(self.trUtf8('Test Plugin Configuration'))
             checkConfigButton.setObjectName(_fromUtf8('checkConfigButton_' + plugin.name))
             checkConfigButton.setToolTip(self.trUtf8('Click here to test the plugin\'s configuration'))
@@ -670,14 +733,22 @@ class MainWindow(QMainWindow):
             pluginsConfigButtonContainer.addStretch(1)
             pluginsConfigButtonContainer.addWidget(applyConfigButton)
             pluginsConfigButtonContainer.addWidget(checkConfigButton)
+            pluginsConfigButtonContainer.addWidget(rateStatusButton)
             layout.addLayout(pluginsConfigButtonContainer)
             page.setLayout(layout)
             self.pluginsConfigurationDialog.ui.ConfigurationDetails.addWidget(page)
-        self.pluginsConfigurationDialog.ui.ConfigurationDetails.setCurrentIndex(0)
+        if selected:
+            for index, plugin in enumerate(pl):
+                if selected == plugin.name:
+                    self.pluginsConfigurationDialog.ui.ConfigurationDetails.setCurrentIndex(index)
+        else:
+            self.pluginsConfigurationDialog.ui.ConfigurationDetails.setCurrentIndex(0)
         self.PluginConfigurationListModel = PluginConfigurationListModel(pl, self)
         self.PluginConfigurationListModel.checkPluginConfiguration()
         self.pluginsConfigurationDialog.ui.PluginsList.setModel(self.PluginConfigurationListModel)
         self.pluginsConfigurationDialog.ui.PluginsList.clicked.connect(self.changePluginConfigurationPage)
+        # If we are refreshing the dialog after successful plugin configuration, return to the same plugin
+
         if self.pluginsConfigurationDialog.exec_():
             self.pluginsConfigurationDialog.saveConfiguration()
 
@@ -702,6 +773,7 @@ class MainWindow(QMainWindow):
         personProjectWizard.ProjectWizardSelectedTargetsTable = ProjectWizardSelectedTargetsTable([], self)
         if personProjectWizard.exec_():
             project = Project()
+            project.projectType = 'person'
             project.projectName = unicode(personProjectWizard.ui.personProjectNameValue.text().toUtf8(), 'utf-8')
             project.projectKeywords = [keyword.strip() for keyword in
                                        unicode(personProjectWizard.ui.personProjectKeywordsValue.text().toUtf8(),
@@ -722,6 +794,55 @@ class MainWindow(QMainWindow):
             # Now that we have saved the project, reload all projects to be shown in the UI
             self.loadProjectsFromStorage()
 
+    def showPlaceProjectWizard(self):
+        """
+        Shows the PlaceProjectWizard and stores the project information once the wizard is completed
+        """
+        def searchForPlace():
+            placeProjectWizard.ui.mapPage.mainFrame().evaluateJavaScript(
+                QString('searchForAddress(\"'+unicode(placeProjectWizard.ui.searchAddressInput.text().toUtf8(), 'utf-8')+'\");'))
+        placeProjectWizard = PlaceProjectWizard()
+        placeProjectWizard.ProjectWizardPluginListModel = ProjectWizardPluginListModel(
+            placeProjectWizard.loadConfiguredPlugins(), self)
+        placeProjectWizard.ui.placeProjectAvailablePluginsListView.setModel(
+            placeProjectWizard.ProjectWizardPluginListModel)
+
+        placeProjectWizard.ui.mapPage = QWebPage()
+        placeProjectWizard.ui.mapPage.mainFrame().addToJavaScriptWindowObject('myPyObj', placeProjectWizard.myPyObj)
+        placeProjectWizard.ui.mapPage.mainFrame().setUrl(
+            QUrl(os.path.join(GeneralUtilities.getIncludeDir(), 'mapSetPoint.html')))
+        placeProjectWizard.ui.radiusUnitComboBox.insertItem(0, QString('km'))
+        placeProjectWizard.ui.radiusUnitComboBox.insertItem(1, QString('m'))
+        placeProjectWizard.ui.radiusUnitComboBox.activated[str].connect(
+            placeProjectWizard.onUnitChanged)
+        placeProjectWizard.ui.searchAddressButton.clicked.connect(searchForPlace)
+        placeProjectWizard.ui.webView.setPage(placeProjectWizard.ui.mapPage)
+        if placeProjectWizard.exec_():
+            project = Project()
+            project.projectType = 'place'
+            project.projectName = unicode(placeProjectWizard.ui.placeProjectNameValue.text().toUtf8(), 'utf-8')
+            project.projectKeywords = [keyword.strip() for keyword in
+                                       unicode(placeProjectWizard.ui.placeProjectKeywordsValue.text().toUtf8(),
+                                               'utf-8').split(',')]
+            project.projectDescription = placeProjectWizard.ui.placeProjectDescriptionValue.toPlainText()
+            project.selectedTargets = []
+            project.enabledPlugins = placeProjectWizard.readSearchConfiguration()
+
+            project.dateCreated = datetime.datetime.now()
+            project.dateEdited = datetime.datetime.now()
+            project.locations = []
+            if hasattr(placeProjectWizard.myPyObj, 'lat') and hasattr(placeProjectWizard.myPyObj, 'lng'):
+                project.poi = (str(placeProjectWizard.myPyObj.lat), str(placeProjectWizard.myPyObj.lng),
+                               '{0}{1}'.format(placeProjectWizard.ui.radiusSpinBox.value(), placeProjectWizard.unit))
+                for enabledPlugin in project.enabledPlugins:
+                    project.selectedTargets.append({'pluginName': enabledPlugin['pluginName'],
+                                                    'poi': project.poi})
+            projectNode = ProjectNode(project.projectName, project)
+            locationsNode = LocationsNode('Locations', projectNode)
+            project.storeProject(projectNode)
+            # Now that we have saved the project, reload all projects to be shown in the UI
+            self.loadProjectsFromStorage()
+
     def loadProjectsFromStorage(self):
         """
         Loads all the existing projects from the storage to be shown in the UI
@@ -738,7 +859,7 @@ class MainWindow(QMainWindow):
                 rootNode.addChild(projectObject['project'])
             except Exception, err:
                 logger.error('Could not read stored project from file')
-                logger.exception(err)
+                logger.error(err)
         self.projectTreeModel = ProjectTreeModel(rootNode)
         self.ui.treeViewProjects.setModel(self.projectTreeModel)
 
