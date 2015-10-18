@@ -16,12 +16,16 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 
 class InputPlugin(IPlugin):
+    hasLocationBasedMode = False
 
     def __init__(self):
         pass
     def activate(self):
         pass
-        
+
+    def hasLocationBasedMode(self):
+        return False
+
     def deactivate(self):
         pass
     
