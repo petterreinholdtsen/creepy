@@ -46,20 +46,26 @@ class PersonProjectWizard(QWizard):
     def showWarning(self, title, text):
         QMessageBox.warning(self, title, text)
 
+    def validateCurrentPage(self):
+        """
+        """
+        if self.currentPage() == self.ui.personProjectWizardPage2:
+            if not self.ProjectWizardSelectedTargetsTable.targets:
+                self.showWarning('No target selected',
+                                 'Please drag and drop your targets to the selected targets before proceeding.')
+            return bool(self.ProjectWizardSelectedTargetsTable.targets)
+        else:
+            return super(PersonProjectWizard, self).validateCurrentPage()
+
     def initializePage(self, i):
         """
         If the page to be loaded is the page containing the search
         options for our plugins, store the selected targets and load the relative search options based on the 
         selected target.
-        Also check if the selected plugins are empty and return the user back. 
-        <TODO>
-        This should be done with registering a field for the selectedTargets TableView 
         """
         if i == 2:
-            self.checkIfSelectedTargets()
             self.storeSelectedTargets()
             self.showPluginsSearchOptions()
-
 
     def checkIfSelectedTargets(self):
         if not self.ProjectWizardSelectedTargetsTable.targets:
@@ -69,9 +75,9 @@ class PersonProjectWizard(QWizard):
             self.next()
 
     def storeSelectedTargets(self):
-        '''
+        """
         Stores a list of the selected targets for future use
-        '''
+        """
         self.selectedTargets = []
         for target in self.ProjectWizardSelectedTargetsTable.targets:
             self.selectedTargets.append({'pluginName': target['pluginName'],
@@ -81,10 +87,10 @@ class PersonProjectWizard(QWizard):
             })
 
     def searchForTargets(self):
-        '''
+        """
         Iterates the selected plugins and for each one performs a search with the given criteria. It
         then populates the PossibleTargets ListModel with the results
-        '''
+        """
         search_term = self.ui.personProjectSearchForValue.text().toUtf8()
         if not search_term:
             self.showWarning(self.trUtf8('Empty Search Term'), self.trUtf8('Please enter a search term'))
@@ -101,11 +107,10 @@ class PersonProjectWizard(QWizard):
             self.ui.personProjectSearchResultsTable.setModel(self.ProjectWizardPossibleTargetsTable)
             self.ui.personProjectSelectedTargetsTable.setModel(self.ProjectWizardSelectedTargetsTable)
 
-
     def loadConfiguredPlugins(self):
-        '''
+        """
         Returns a list with the configured plugins that can be used
-        '''
+        """
         self.PluginManager = PluginManagerSingleton.get()
         self.PluginManager.setCategoriesFilter({'Input': InputPlugin})
         self.PluginManager.setPluginPlaces(GeneralUtilities.getPluginDirs())
@@ -118,10 +123,10 @@ class PersonProjectWizard(QWizard):
         pass
 
     def showPluginsSearchOptions(self):
-        '''
+        """
         Loads the search options of all the selected plugins and populates the relevant UI elements
         with input fields for the string options and checkboxes for the boolean options
-        '''
+        """
         pl = []
         for pluginName in list(
                 set([target['pluginName'] for target in self.ProjectWizardSelectedTargetsTable.targets])):
@@ -193,18 +198,17 @@ class PersonProjectWizard(QWizard):
         self.ui.personProjectWizardSearchConfigPluginsList.setModel(self.SearchConfigPluginConfigurationListModel)
         self.ui.personProjectWizardSearchConfigPluginsList.clicked.connect(self.changePluginConfigurationPage)
 
-
     def changePluginConfigurationPage(self, modelIndex):
-        '''
+        """
         Called when the user clicks on a plugin in the list of the PluginConfiguration. This shows
         the relevant page with that plugin's configuration options
-        '''
+        """
         self.ui.searchConfiguration.setCurrentIndex(modelIndex.row())
 
     def readSearchConfiguration(self):
-        '''
+        """
         Reads all the search configuration options for the enabled plugins and and returns a list of the enabled plugins and their options.
-        '''
+        """
         enabledPlugins = []
         pages = (self.ui.searchConfiguration.widget(i) for i in range(self.ui.searchConfiguration.count()))
         for page in pages:

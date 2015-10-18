@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'gui/placeProjectWizard.ui'
 #
-# Created: Mon Sep 28 20:23:09 2015
+# Created: Wed Oct 14 17:30:49 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -90,6 +90,20 @@ class Ui_placeProjectWizard(object):
         self.webView.setProperty("url", QtCore.QUrl(_fromUtf8("about:blank")))
         self.webView.setObjectName(_fromUtf8("webView"))
         self.containerLayout.addWidget(self.webView)
+        self.searchAddressLayout = QtGui.QHBoxLayout()
+        self.searchAddressLayout.setSizeConstraint(QtGui.QLayout.SetDefaultConstraint)
+        self.searchAddressLayout.setObjectName(_fromUtf8("searchAddressLayout"))
+        self.searchAddressLabel = QtGui.QLabel(self.verticalLayoutWidget)
+        self.searchAddressLabel.setObjectName(_fromUtf8("searchAddressLabel"))
+        self.searchAddressLayout.addWidget(self.searchAddressLabel)
+        self.searchAddressInput = QtGui.QLineEdit(self.verticalLayoutWidget)
+        self.searchAddressInput.setInputMask(_fromUtf8(""))
+        self.searchAddressInput.setObjectName(_fromUtf8("searchAddressInput"))
+        self.searchAddressLayout.addWidget(self.searchAddressInput)
+        self.searchAddressButton = QtGui.QPushButton(self.verticalLayoutWidget)
+        self.searchAddressButton.setObjectName(_fromUtf8("searchAddressButton"))
+        self.searchAddressLayout.addWidget(self.searchAddressButton)
+        self.containerLayout.addLayout(self.searchAddressLayout)
         self.controlsContainerLayout = QtGui.QHBoxLayout()
         self.controlsContainerLayout.setObjectName(_fromUtf8("controlsContainerLayout"))
         spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
@@ -169,6 +183,8 @@ class Ui_placeProjectWizard(object):
         self.placeProjectWizardPage2.setTitle(_translate("placeProjectWizard", "Step 2 - Set the target", None))
         self.placeProjectWizardPage2.setSubTitle(_translate("placeProjectWizard", "Select the Point Of Interest and the distance around which you want to get results", None))
         self.titleLabel.setText(_translate("placeProjectWizard", "<html><head/><body><p><span style=\" font-size:9pt;\">Drop a </span><span style=\" font-size:9pt; font-weight:600; color:#ff0000;\">pin</span><span style=\" font-size:9pt;\"> on the map for your point of interest</span></p></body></html>", None))
+        self.searchAddressLabel.setText(_translate("placeProjectWizard", "Address", None))
+        self.searchAddressButton.setText(_translate("placeProjectWizard", "Search", None))
         self.radiusLabel.setText(_translate("placeProjectWizard", "<html><head/><body><p><span style=\" font-size:9pt;\">Distance from the POI :</span></p></body></html>", None))
         self.placeProjectSearchInLabel.setText(_translate("placeProjectWizard", "<html><head/><body><p><span style=\" font-weight:600;\">Search In</span></p></body></html>", None))
         self.placeProjectWizardPage4.setTitle(_translate("placeProjectWizard", "Step 3 - Set Parameters", None))
