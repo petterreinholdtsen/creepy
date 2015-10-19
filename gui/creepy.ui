@@ -402,6 +402,9 @@
    <addaction name="actionRemoveFilters"/>
   </widget>
   <widget class="QDockWidget" name="dockWLogging">
+   <property name="windowTitle">
+    <string>Log Output</string>
+   </property>
    <attribute name="dockWidgetArea">
     <number>8</number>
    </attribute>

@@ -57,7 +57,7 @@ class Flickr(InputPlugin):
                 logger('Error getting an authenticated instance of the flickr API.')
                 return None
         except Exception, err:
-            logger.exception(err)
+            logger.error(err)
             return None
 
     def searchForTargets(self, search_term):
@@ -110,7 +110,7 @@ class Flickr(InputPlugin):
                 return None
         except Exception, err:
             logger.error("Error getting target info from Flickr for target " + userId)
-            logger.exception(err)
+            logger.error(err)
             return None
 
     def isConfigured(self):
@@ -130,7 +130,7 @@ class Flickr(InputPlugin):
         if self.api is None:
             self.api = self.getAuthenticatedAPI()
         try:
-            results = self.api.people_getPublicPhotos(user_id=unicode(userid), extras="geo, date_taken", per_page=500,
+            results = self.api.people_getPublicPhotos(user_id=unicode(userid), extras="geo, date_taken, url_m, owner_name", per_page=500,
                                                       page=page_nr)
             if results.attrib['stat'] == 'ok':
                 return results.find('photos').findall('photo')
@@ -138,7 +138,7 @@ class Flickr(InputPlugin):
                 return []
         except Exception, err:
             logger.error("Error getting photos per page from Flickr")
-            logger.exception(err)
+            logger.error(err)
             return []
 
     def getLocationsFromPhotos(self, photos, target):
@@ -149,7 +149,7 @@ class Flickr(InputPlugin):
                     if photo.attrib['latitude'] != '0':
                         loc = {}
                         loc['plugin'] = "flickr"
-                        loc['username'] = target['targetUsername']
+                        loc['username'] = photo.attrib['ownername']
                         photo_link = unicode(
                             'http://www.flickr.com/photos/%s/%s' % (photo.attrib['owner'], photo.attrib['id']), 'utf-8')
                         title = photo.attrib['title']
@@ -163,14 +163,11 @@ class Flickr(InputPlugin):
                         loc['lon'] = photo.attrib['longitude']
                         loc['accuracy'] = 'high'
                         loc['shortName'] = "Unavailable"
-                        if hasattr(photo, 'url_m'):
-                            loc['media_url'] = photo.attrib['url_m']
-                        else:
-                            loc['media_url'] = ''
+                        loc['media_url'] = photo.attrib['url_m']
                         loc['infowindow'] = self.constructContextInfoWindow(photo_link, loc['date'], loc['media_url'], loc['username'])
                         locations.append(loc)
                 except Exception, err:
-                    logger.exception(err)
+                    logger.error(err)
         return locations
 
     def returnAnalysis(self, target, search_params):
@@ -179,7 +176,7 @@ class Flickr(InputPlugin):
         if self.api is None:
             self.api = self.getAuthenticatedAPI()
         try:
-            results = self.api.people_getPublicPhotos(user_id=unicode(target['targetUserid']), extras="geo, date_taken, url_m",
+            results = self.api.people_getPublicPhotos(user_id=unicode(target['targetUserid']), extras="geo, date_taken, url_m, owner_name",
                                                       per_page=500)
 
             if results.attrib['stat'] == 'ok':
@@ -196,7 +193,7 @@ class Flickr(InputPlugin):
                 locationsList = self.getLocationsFromPhotos(photosList, target)
         except FlickrError, err:
             logger.error("Error getting locations from Flickr")
-            logger.exception(err)
+            logger.error(err)
         return locationsList, None
 
     def searchForResultsNearPlace(self, geocode):
@@ -235,7 +232,7 @@ class Flickr(InputPlugin):
             logger.debug("Retrieved {0} photos from Flickr".format(len(locationsList)))
         except FlickrError, err:
             logger.error("Error getting locations from Flickr")
-            logger.exception(err)
+            logger.error(err)
         return locationsList
 
     def runConfigWizard(self):
@@ -286,12 +283,12 @@ class Flickr(InputPlugin):
                     self.options_string['hidden_access_token_secret'] = flickr.token_cache.token.token_secret
                     self.config.write()
                 except Exception, err:
-                    logger.exception(err)
+                    logger.error(err)
                     self.showWarning("Error completing the wizard",
                                      "We were unable to obtain the access token for your account, please try to run the wizard again.")
 
         except Exception, err:
-            logger.exception(err)
+            logger.error(err)
 
     def constructContextInfoWindow(self, link, date, media_url, username):
         html = unicode(self.options_string['infowindow_html'], 'utf-8')

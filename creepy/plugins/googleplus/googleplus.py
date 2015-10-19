@@ -11,16 +11,18 @@ import dateutil.parser
 from PyQt4.QtGui import QWizard, QWizardPage, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QMessageBox
 from PyQt4.QtCore import QUrl
 from PyQt4.QtWebKit import QWebView
-from utilities import GeneralUtilities
-
-#set up logging
+from utilities import GeneralUtilities, QtHandler
+# set up logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 fh = logging.FileHandler(os.path.join(GeneralUtilities.getLogDir(), 'creepy_main.log'))
 fh.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(levelname)s:%(asctime)s  In %(filename)s:%(lineno)d: %(message)s')
 fh.setFormatter(formatter)
+guiLoggingHandler = QtHandler.QtHandler()
+guiLoggingHandler.setFormatter(formatter)
 logger.addHandler(fh)
+logger.addHandler(guiLoggingHandler)
 
 
 class Googleplus(InputPlugin):

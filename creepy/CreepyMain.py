@@ -54,8 +54,8 @@ guiLoggingHandler.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(guiLoggingHandler)
 # Capture stderr and stdout to a file
-# sys.stdout = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stdout.log'), 'w')
-# sys.stderr = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stderr.log'), 'w')
+sys.stdout = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stdout.log'), 'w')
+sys.stderr = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stderr.log'), 'w')
 try:
     _fromUtf8 = QString.fromUtf8
 except AttributeError:
@@ -149,6 +149,7 @@ class MainWindow(QMainWindow):
         self.ui.menuView.addAction(self.ui.dockWProjects.toggleViewAction())
         self.ui.menuView.addAction(self.ui.dockWLocationsList.toggleViewAction())
         self.ui.menuView.addAction(self.ui.dockWCurrentLocationDetails.toggleViewAction())
+        self.ui.menuView.addAction(self.ui.dockWLogging.toggleViewAction())
         # Connect all the signals
         self.ui.actionPluginsConfiguration.triggered.connect(self.showPluginsConfigurationDialog)
         self.ui.actionNewPersonProject.triggered.connect(self.showPersonProjectWizard)

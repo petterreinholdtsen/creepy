@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'gui/creepy.ui'
 #
-# Created: Tue Oct 13 22:01:13 2015
+# Created: Mon Oct 19 00:14:19 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -428,6 +428,7 @@ class Ui_CreepyMainWindow(object):
         self.currentTargetDetailsContextLabel.setText(_translate("CreepyMainWindow", "<b>Context:  <b>", None))
         self.mainToolbar.setWindowTitle(_translate("CreepyMainWindow", "toolBar", None))
         self.locationsActionsToolbar.setWindowTitle(_translate("CreepyMainWindow", "toolBar_2", None))
+        self.dockWLogging.setWindowTitle(_translate("CreepyMainWindow", "Log Output", None))
         self.actionExportKML.setText(_translate("CreepyMainWindow", "Export Project Locations as KML", None))
         self.actionExportKML.setToolTip(_translate("CreepyMainWindow", "Export project locations in KML format", None))
         self.actionExportCSV.setText(_translate("CreepyMainWindow", "Export Project Locations as CSV", None))

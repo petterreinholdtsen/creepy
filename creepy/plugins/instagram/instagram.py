@@ -143,7 +143,7 @@ class Instagram(InputPlugin):
                 if hasattr(i, 'location'):
                     loc = {}
                     loc['plugin'] = "instagram"
-                    loc['username'] = target['targetUsername']
+                    loc['username'] = i.user.username
                     loc['context'] = i.caption.text if i.caption else unicode('No Caption', 'utf-8')
                     loc['infowindow'] = self.constructContextInfoWindow(i, target['targetUsername'])
                     loc['date'] = pytz.utc.localize(i.created_time)
@@ -182,6 +182,7 @@ class Instagram(InputPlugin):
             inputLink = QLineEdit()
             inputLink.setObjectName("inputLink")
             labelLink = QLabel("Your token value:")
+            openInBrowserButton = QPushB
             layout1.addWidget(txtArea)
             layout1.addWidget(urlArea)
             layout1.addWidget(labelLink)
