@@ -7,10 +7,12 @@ from urlparse import urlparse, parse_qs
 from configobj import ConfigObj
 
 import pytz
-from PyQt4.QtGui import QLabel, QLineEdit, QWizard, QWizardPage, QVBoxLayout, QMessageBox, QTextEdit
+from PyQt4.QtGui import QLabel, QLineEdit, QWizard, QWizardPage, QVBoxLayout, QMessageBox, QTextEdit, QPushButton
 from instagram.client import InstagramAPI
 from models.InputPlugin import InputPlugin
 from utilities import GeneralUtilities, QtHandler
+import functools
+import webbrowser
 # set up logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -163,6 +165,9 @@ class Instagram(InputPlugin):
             logger.error("Error getting locations from instagram plugin")
         return locations_list, None
 
+    def openLinkInBrowser(self, link):
+        webbrowser.open(link, new=1)
+
     def runConfigWizard(self):
         try:
             api = InstagramAPI(client_id=self.options_string['hidden_client_id'],
@@ -182,9 +187,11 @@ class Instagram(InputPlugin):
             inputLink = QLineEdit()
             inputLink.setObjectName("inputLink")
             labelLink = QLabel("Your token value:")
-            openInBrowserButton = QPushB
+            openInBrowserButton = QPushButton("Open in browser")
+            openInBrowserButton.clicked.connect(functools.partial(self.openLinkInBrowser, url))
             layout1.addWidget(txtArea)
             layout1.addWidget(urlArea)
+            layout1.addWidget(openInBrowserButton)
             layout1.addWidget(labelLink)
             layout1.addWidget(inputLink)
             page1.setLayout(layout1)
