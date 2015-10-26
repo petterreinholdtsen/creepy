@@ -34,8 +34,7 @@ class Googleplus(InputPlugin):
 
     def __init__(self):
         # Try and read the labels file
-        # load cacerts from the bundled cacerts, otherwise calls in Windows will fail
-        self.http = httplib2.Http(ca_certs=os.path.join(os.getcwd(), 'cacerts.txt'))
+        self.http = httplib2.Http()
         labels_config = self.getConfigObj(self.name+'.labels')
         try:
             self.labels = labels_config['labels']
