@@ -55,7 +55,7 @@ class Ui_aboutDialog(object):
 
     def retranslateUi(self, aboutDialog):
         aboutDialog.setWindowTitle(_translate("aboutDialog", "About", None))
-        self.label.setText(_translate("aboutDialog", "<html><head/><body><p align=\"center\"><img src=\":/creepy/creepy\"/></p><p><br/></p><p align=\"center\"><span style=\" font-size:9pt;\">Creepy is </span><span style=\" font-size:9pt; font-style:italic;\">the</span><span style=\" font-size:9pt;\"> geolocation OSINT tool. </span></p><p><br/></p><p><span style=\" font-weight:600;\">Version : </span>1.4 - Codename &quot;GIJC&quot;</p><p><span style=\" font-weight:600;\">Author</span> : Ioannis Kakavas &lt; jkakavas@gmail.com &gt;</p><p><span style=\" font-weight:600;\">Website</span>: www.geocreepy.com</p></body></html>", None))
+        self.label.setText(_translate("aboutDialog", "<html><head/><body><p align=\"center\"><img src=\":/creepy/creepy\"/></p><p><br/></p><p align=\"center\"><span style=\" font-size:9pt;\">Creepy is </span><span style=\" font-size:9pt; font-style:italic;\">the</span><span style=\" font-size:9pt;\"> geolocation OSINT tool. </span></p><p><br/></p><p><span style=\" font-weight:600;\">Version : </span>1.4.1 - Codename &quot;GIJC&quot;</p><p><span style=\" font-weight:600;\">Author</span> : Ioannis Kakavas &lt; jkakavas@gmail.com &gt;</p><p><span style=\" font-weight:600;\">Website</span>: www.geocreepy.com</p></body></html>", None))
 
 import creepy_resources_rc
 
