@@ -9,6 +9,7 @@ import shelve
 import functools
 import urllib2
 import webbrowser
+import pytz
 from components import creepy_resources_compiled
 from distutils.version import StrictVersion
 from PyQt4.QtCore import QString, QThread, SIGNAL, QUrl, QDateTime, QDate, QRect, Qt
