@@ -73,7 +73,7 @@ class Instagram(InputPlugin):
                 target['targetFullname'] = i.full_name
                 # save the pic in the temp folder to show it later
                 filename = 'profile_pic_%s' % i.id
-                temp_file = os.path.join(os.getcwdu(), "temp", filename)
+                temp_file = os.path.join(GeneralUtilities.getTempDir(), filename)
                 if not os.path.exists(temp_file):
                     urllib.urlretrieve(i.profile_picture, temp_file)
                 possibleTargets.append(target)

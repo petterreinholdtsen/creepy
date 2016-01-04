@@ -70,7 +70,7 @@ class Twitter(InputPlugin):
                     target['targetFullname'] = i.name
                     # save the pic in the temp folder to show it later
                     filename = 'profile_pic_%s' % i.id_str
-                    temp_file = os.path.join(os.getcwd(), "temp", filename)
+                    temp_file = os.path.join(GeneralUtilities.getTempDir(), filename)
                     # Retieve and save the profile phot only if it does not exist
                     if not os.path.exists(temp_file):
                         urllib.urlretrieve(i.profile_image_url, temp_file)
