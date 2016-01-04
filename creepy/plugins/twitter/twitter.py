@@ -237,7 +237,7 @@ class Twitter(InputPlugin):
             if userObject.geo_enabled:
                 twitterDiv += p('User has enabled the possibility to geolocate their tweets.')
             else:
-                twitterDiv += p('User has disbaled the possibility to geolocate their tweets.')
+                twitterDiv += p('User has disabled the possibility to geolocate their tweets.')
             if userObject.followers_count:
                 twitterDiv += p('The user has {0} followers.'.format(str(userObject.followers_count)))
             if userObject.friends_count:
