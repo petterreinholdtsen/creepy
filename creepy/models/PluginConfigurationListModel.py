@@ -3,6 +3,7 @@
 from PyQt4.QtCore import QVariant, QAbstractListModel, Qt
 from PyQt4.Qt import QPixmap, QIcon
 import os
+from utilities import GeneralUtilities
 
 class PluginConfigurationListModel(QAbstractListModel):
     def __init__(self, plugins, parent=None):
@@ -29,12 +30,12 @@ class PluginConfigurationListModel(QAbstractListModel):
             if role == Qt.DisplayRole:
                 return QVariant(pluginListItem[0].name)
             if role == Qt.DecorationRole:
-                picturePath = os.path.join(os.getcwdu(), 'plugins', pluginListItem[0].plugin_object.name, 'logo.png')
-                if picturePath and os.path.exists(picturePath):
-                    pixmap = QPixmap(picturePath)
-                    return QIcon(pixmap)
-                else:
-                    pixmap = QPixmap(':/creepy/folder')
-                    return QIcon(pixmap)
+                for dir in GeneralUtilities.getPluginDirs():
+                    picturePath = os.path.join(dir, pluginListItem[0].plugin_object.name, 'logo.png')
+                    if picturePath and os.path.exists(picturePath):
+                        pixmap = QPixmap(picturePath)
+                        return QIcon(pixmap)
+                pixmap = QPixmap(':/creepy/folder')
+                return QIcon(pixmap)
         else: 
             return QVariant()

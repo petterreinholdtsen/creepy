@@ -21,14 +21,14 @@ class ProjectWizardPluginListModel(QAbstractListModel):
             if role == Qt.DisplayRole:
                 return QVariant(plugin.name)
             if role == Qt.DecorationRole:
-                picturePath = os.path.join(os.getcwdu(), 'plugins', plugin.plugin_object.name, 'logo.png')
-                if picturePath and os.path.exists(picturePath):
-                    pixmap = QPixmap(picturePath)
-                    return QIcon(pixmap.scaled(30, 30, Qt.IgnoreAspectRatio, Qt.FastTransformation))
-                else:
-                    pixmap = QPixmap(os.path.join(GeneralUtilities.getIncludeDir(), 'generic_plugin.png'))
-                    pixmap.scaled(30, 30, Qt.IgnoreAspectRatio)
-                    return QIcon(pixmap)
+                for dir in GeneralUtilities.getPluginDirs():
+                    picturePath = os.path.join(dir, plugin.plugin_object.name, 'logo.png')
+                    if picturePath and os.path.exists(picturePath):
+                        pixmap = QPixmap(picturePath)
+                        return QIcon(pixmap.scaled(30, 30, Qt.IgnoreAspectRatio, Qt.FastTransformation))
+                pixmap = QPixmap(os.path.join(GeneralUtilities.getIncludeDir(), 'generic_plugin.png'))
+                pixmap.scaled(30, 30, Qt.IgnoreAspectRatio)
+                return QIcon(pixmap)
             if role == Qt.CheckStateRole:
                 if plugin:
                     return (Qt.Checked if plugin.name in self.checkedPlugins else Qt.Unchecked)
