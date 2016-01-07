@@ -134,10 +134,8 @@ class MainWindow(QMainWindow):
         self.ui = Ui_CreepyMainWindow()
         self.ui.setupUi(self)
         # Create folders for projects and temp if they do not exist
-        if not os.path.exists(os.path.join(os.getcwd(), 'projects')):
-            os.makedirs(os.path.join(os.getcwd(), 'projects'))
-        if not os.path.exists(os.path.join(os.getcwd(), 'temp')):
-            os.makedirs(os.path.join(os.getcwd(), 'temp'))
+        GeneralUtilities.getProjectsDir()
+        GeneralUtilities.getTempDir()
         self.projectsList = []
         self.currentProject = None
         self.ui.mapWebPage = QWebPage()
@@ -850,7 +848,7 @@ class MainWindow(QMainWindow):
         Loads all the existing projects from the storage to be shown in the UI
         """
         # Show the existing Projects 
-        projectsDir = os.path.join(os.getcwd(), 'projects')
+        projectsDir = GeneralUtilities.getProjectsDir()
         projectFileNames = [os.path.join(projectsDir, f) for f in os.listdir(projectsDir) if
                             (os.path.isfile(os.path.join(projectsDir, f)) and f.endswith('.db'))]
         self.projectNames = [n.replace('.db', '').replace(str(projectsDir) + '/', '') for n in projectFileNames]

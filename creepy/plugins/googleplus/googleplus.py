@@ -65,7 +65,7 @@ class Googleplus(InputPlugin):
                               'targetFullname': person['displayName']}
                     #save the pic in the temp folder to show it later
                     filename = 'profile_pic_%s' % person['id']
-                    temp_file = os.path.join(os.getcwd(), 'temp', filename)
+                    temp_file = os.path.join(GeneralUtilities.getTempDir(), filename)
                     #Retieve and save the profile photo only if it does not exist
                     if not os.path.exists(temp_file):
                         urllib.urlretrieve(person['image']['url'], temp_file)

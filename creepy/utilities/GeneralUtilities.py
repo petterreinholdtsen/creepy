@@ -32,6 +32,34 @@ def getLogDir():
     return logdir
 
 
+def getProjectsDir():
+    if os.path.exists("/usr/share/creepy"):
+        dir = os.path.join(expanduser("~/.creepy"), "projects")
+    else:
+        dir = os.path.join(os.getcwd(), 'projects')
+    try:
+        os.makedirs(dir)
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir(dir):
+            pass
+        else:
+            raise
+    return dir
+
+def getTempDir():
+    if os.path.exists("/usr/share/creepy"):
+        dir = os.path.join(expanduser("~/.creepy"), "temp")
+    else:
+        dir = os.path.join(os.getcwd(), 'temp')
+    try:
+        os.makedirs(dir)
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir(dir):
+            pass
+        else:
+            raise
+    return dir
+
 def getPluginDirs():
     if os.path.exists("/usr/share/creepy/plugins"):
         # if creepy is installed via debian package
