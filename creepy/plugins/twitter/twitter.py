@@ -11,7 +11,6 @@ from PyQt4.QtGui import QWizard, QWizardPage, QLabel, QLineEdit, QVBoxLayout, QH
 from PyQt4.QtCore import QUrl, QString
 from PyQt4.QtWebKit import QWebView
 from tweepy import Cursor
-from configobj import ConfigObj
 from datetime import datetime
 from dominate.tags import *
 from collections import Counter

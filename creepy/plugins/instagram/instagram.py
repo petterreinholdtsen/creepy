@@ -4,7 +4,6 @@ import os
 import logging
 import urllib
 from urlparse import urlparse, parse_qs
-from configobj import ConfigObj
 
 import pytz
 from PyQt4.QtGui import QLabel, QLineEdit, QWizard, QWizardPage, QVBoxLayout, QMessageBox, QTextEdit, QPushButton
