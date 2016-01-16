@@ -713,8 +713,13 @@ class MainWindow(QMainWindow):
             pluginsConfigButtonContainer = QHBoxLayout()
             rateStatusButton = QPushButton(self.trUtf8('Check Rate Limits'))
             rateStatusButton.setObjectName(_fromUtf8('checkRateButton_' + plugin.name))
-            rateStatusButton.setToolTip(
-                self.trUtf8('Click here to get information about the plugin\'s API rate limits'))
+            if not plugin.plugin_object.hasRateLimitInfo:
+                rateStatusButton.setEnabled(False)
+                rateStatusButton.setToolTip(
+                    self.trUtf8('Plugin do not support getting API rate limits'))
+            else:
+                rateStatusButton.setToolTip(
+                    self.trUtf8('Click here to get information about the plugin\'s API rate limits'))
             rateStatusButton.resize(rateStatusButton.sizeHint())
             rateStatusButton.clicked.connect(
                 functools.partial(self.pluginsConfigurationDialog.getRateLimitStatus, plugin)
