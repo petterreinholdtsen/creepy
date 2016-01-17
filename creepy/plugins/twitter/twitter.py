@@ -338,6 +338,14 @@ class Twitter(InputPlugin):
         try:
             if self.api is None:
                 self.api = self.getAuthenticatedAPI()
+            # Min Radius is 1km, convert m to km and set it to 1km if it is less than that
+            if not geocode.split(',')[2].endswith('km'):
+                if int(geocode.split(',')[2].replace('m','')) < 1000:
+                    geocode = ','.join(geocode.split(',')[:2])+',1km'
+                else:
+                    radius = int(geocode.split(',')[2].replace('m','')) / 1000
+                    geocode = ','.join(geocode.split(',')[:2])+',{0}km'.format(radius)
+
             tweets = Cursor(self.api.search, count=100, q='*', geocode=geocode, result_type="recent").items()
             for i in tweets:
                 finalDateTimeObj = pytz.utc.localize(i.created_at)
