@@ -134,7 +134,7 @@ class Googleplus(InputPlugin):
                 try:
                     credentials = flow.step2_exchange(str(self.wizard.field('inputCode').toString()).strip(), self.http)
                     self.options_string['hidden_credentials'] = credentials.to_json()
-                    self.config.write()
+                    self.saveConfiguration(self.config)
                 except Exception, err:
                     logger.error(err)
                     self.showWarning('Error completing the wizard',

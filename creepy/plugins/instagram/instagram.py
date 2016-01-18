@@ -202,7 +202,7 @@ class Instagram(InputPlugin):
                     try:
                         access_token = api.exchange_code_for_access_token(code=c)
                         self.options_string['hidden_access_token'] = access_token[0]
-                        self.config.write()
+                        self.saveConfiguration(self.config)
                     except Exception, err:
                         self.showWarning("Error Getting Access Token",
                                          "Please verify that the link you pasted was correct. Try running the wizard again.")

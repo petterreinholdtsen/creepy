@@ -281,7 +281,7 @@ class Flickr(InputPlugin):
                     flickr.get_access_token(verifier)
                     self.options_string['hidden_access_token'] = flickr.token_cache.token.token
                     self.options_string['hidden_access_token_secret'] = flickr.token_cache.token.token_secret
-                    self.config.write()
+                    self.saveConfiguration(self.config)
                 except Exception, err:
                     logger.error(err)
                     self.showWarning("Error completing the wizard",

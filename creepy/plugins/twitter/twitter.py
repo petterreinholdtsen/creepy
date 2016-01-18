@@ -140,7 +140,7 @@ class Twitter(InputPlugin):
                     oAuthHandler.get_access_token(str(self.wizard.field("inputPin").toString()).strip())
                     self.options_string['hidden_access_token'] = oAuthHandler.access_token
                     self.options_string['hidden_access_token_secret'] = oAuthHandler.access_token_secret
-                    self.config.write()
+                    self.saveConfiguration(self.config)
                 except Exception, err:
                     logger.error(err)
                     self.showWarning("Error completing the wizard",
