@@ -38,7 +38,7 @@ class Googleplus(InputPlugin):
         labels_config = self.getConfigObj(self.name+'.labels')
         try:
             self.labels = labels_config['labels']
-        except Exception, err:
+        except Exception as err:
             self.labels = None
             logger.error('Could not load the labels file for the  {0} plugin .'.format(self.name))
             logger.error(err)
@@ -70,7 +70,7 @@ class Googleplus(InputPlugin):
                     if not os.path.exists(temp_file):
                         urllib.urlretrieve(person['image']['url'], temp_file)
                     possibleTargets.append(target)
-        except Exception, err:
+        except Exception as err:
             logger.error(err)
             logger.error("Error searching for targets in Google+ plugin.")
         return possibleTargets
@@ -84,7 +84,7 @@ class Googleplus(InputPlugin):
                 self.http = credentials.authorize(self.http)
             service = build('plus', 'v1', http=self.http)
             return service
-        except Exception, e:
+        except Exception as e:
             logger.error(e)
             logger.error("Error getting an authentication context")
             return None
@@ -135,18 +135,18 @@ class Googleplus(InputPlugin):
                     credentials = flow.step2_exchange(str(self.wizard.field('inputCode').toString()).strip(), self.http)
                     self.options_string['hidden_credentials'] = credentials.to_json()
                     self.saveConfiguration(self.config)
-                except Exception, err:
+                except Exception as err:
                     logger.error(err)
                     self.showWarning('Error completing the wizard',
                                      'We were unable to obtain the credentials for your account, please try to run the wizard again.')
 
-        except Exception,err:
+        except Exception as err:
             logger.error(err)
 
     def showWarning(self, title, text):
         try:
             QMessageBox.warning(self.wizard, title, text)
-        except Exception, err:
+        except Exception as err:
             logger(err)
 
     '''
@@ -160,7 +160,7 @@ class Googleplus(InputPlugin):
             peopleResource = self.service.people()
             personDocument = peopleResource.get(userId='me').execute()
             return True, ''
-        except Exception, err:
+        except Exception as err:
             logger.error(err)
             return False, err
 
@@ -200,7 +200,7 @@ class Googleplus(InputPlugin):
                         locations_list.append(loc)
                 request = self.service.activities().list_next(request, activitiesDocument)
             logger.debug('{0} locations were retrieved from GooglePlus Plugin'.format(str(len(locations_list))))
-        except Exception, e:
+        except Exception as e:
             logger.error(e)
             logger.error("Error getting locations from GooglePlus plugin")
         return locations_list, None

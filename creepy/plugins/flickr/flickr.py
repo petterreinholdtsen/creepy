@@ -36,7 +36,7 @@ class Flickr(InputPlugin):
         labels_config = self.getConfigObj(self.name + '.labels')
         try:
             self.labels = labels_config['labels']
-        except Exception, err:
+        except Exception as err:
             self.labels = None
             logger.error("Could not load the labels file for the  " + self.name + " plugin .")
             logger.error(err)
@@ -56,7 +56,7 @@ class Flickr(InputPlugin):
             else:
                 logger('Error getting an authenticated instance of the flickr API.')
                 return None
-        except Exception, err:
+        except Exception as err:
             logger.error(err)
             return None
 
@@ -74,7 +74,7 @@ class Flickr(InputPlugin):
             for userid in results.find('user').items():
                 possibleTargets.append(self.getUserInfo(userid[1]))
 
-        except Exception, e:
+        except Exception as e:
             logger.error(e)
             if e.message == 'Error: 1: User not found':
                 logger.info("No results for search query " + search_term + " from Flickr Plugin")
@@ -108,7 +108,7 @@ class Flickr(InputPlugin):
                 return target
             else:
                 return None
-        except Exception, err:
+        except Exception as err:
             logger.error("Error getting target info from Flickr for target " + userId)
             logger.error(err)
             return None
@@ -121,7 +121,7 @@ class Flickr(InputPlugin):
                 self.api = self.getAuthenticatedAPI()
             self.api.people_findByUsername(username="testAPIKey");
             return True, ''
-        except Exception, e:
+        except Exception as e:
             logger.error('Error establishing connection to Flickr API.')
             logger.error(e)
             return False, 'Error establishing connection to Flickr API.'
@@ -136,7 +136,7 @@ class Flickr(InputPlugin):
                 return results.find('photos').findall('photo')
             else:
                 return []
-        except Exception, err:
+        except Exception as err:
             logger.error("Error getting photos per page from Flickr")
             logger.error(err)
             return []
@@ -166,7 +166,7 @@ class Flickr(InputPlugin):
                         loc['media_url'] = photo.attrib['url_m']
                         loc['infowindow'] = self.constructContextInfoWindow(photo_link, loc['date'], loc['media_url'], loc['username'])
                         locations.append(loc)
-                except Exception, err:
+                except Exception as err:
                     logger.error(err)
         return locations
 
@@ -191,7 +191,7 @@ class Flickr(InputPlugin):
                     photosList = results.find('photos').findall('photo')
 
                 locationsList = self.getLocationsFromPhotos(photosList, target)
-        except FlickrError, err:
+        except FlickrError as err:
             logger.error("Error getting locations from Flickr")
             logger.error(err)
         return locationsList, None
@@ -230,7 +230,7 @@ class Flickr(InputPlugin):
                 loc['infowindow'] = self.constructContextInfoWindow(photo_link, loc['date'], loc['media_url'], loc['username'])
                 locationsList.append(loc)
             logger.debug("Retrieved {0} photos from Flickr".format(len(locationsList)))
-        except FlickrError, err:
+        except FlickrError as err:
             logger.error("Error getting locations from Flickr")
             logger.error(err)
         return locationsList
@@ -282,12 +282,12 @@ class Flickr(InputPlugin):
                     self.options_string['hidden_access_token'] = flickr.token_cache.token.token
                     self.options_string['hidden_access_token_secret'] = flickr.token_cache.token.token_secret
                     self.saveConfiguration(self.config)
-                except Exception, err:
+                except Exception as err:
                     logger.error(err)
                     self.showWarning("Error completing the wizard",
                                      "We were unable to obtain the access token for your account, please try to run the wizard again.")
 
-        except Exception, err:
+        except Exception as err:
             logger.error(err)
 
     def constructContextInfoWindow(self, link, date, media_url, username):

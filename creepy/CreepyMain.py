@@ -215,7 +215,7 @@ class MainWindow(QMainWindow):
             updateCheckDialog.ui.versionsTableWidget.setItem(0, 4, QTableWidgetItem(latestVersion))
             updateCheckDialog.show()
             updateCheckDialog.exec_()
-        except Exception, err:
+        except Exception as err:
             if type(err) == 'string':
                 mes = err
             else:
@@ -437,7 +437,7 @@ class MainWindow(QMainWindow):
                 fileobj.write(csv_string)
                 fileobj.close()
                 self.ui.statusbar.showMessage(self.trUtf8('Project Locations have been exported successfully'))
-            except Exception, err:
+            except Exception as err:
                 logger.error(err)
                 self.ui.statusbar.showMessage(self.trUtf8('Error saving the export.'))
 
@@ -505,7 +505,7 @@ class MainWindow(QMainWindow):
                 fileobj.write(kml_string)
                 fileobj.close()
                 self.ui.statusbar.showMessage(self.trUtf8('Project Locations have been exported successfully'))
-            except Exception, err:
+            except Exception as err:
                 logger.error(err)
                 self.ui.statusbar.showMessage(self.trUtf8('Error saving the export.'))
 
@@ -862,7 +862,7 @@ class MainWindow(QMainWindow):
             projectObject = shelve.open(projectFile)
             try:
                 rootNode.addChild(projectObject['project'])
-            except Exception, err:
+            except Exception as err:
                 logger.error('Could not read stored project from file')
                 logger.error(err)
         self.projectTreeModel = ProjectTreeModel(rootNode)

@@ -36,7 +36,7 @@ class Instagram(InputPlugin):
         labels_config = self.getConfigObj(self.name + '.labels')
         try:
             self.labels = labels_config['labels']
-        except Exception, err:
+        except Exception as err:
             self.labels = None
             logger.error("Could not load the labels file for the  " + self.name + " plugin .")
             logger.error(err)
@@ -53,7 +53,7 @@ class Instagram(InputPlugin):
         try:
             self.api.user()
             return True, ""
-        except Exception, err:
+        except Exception as err:
             return False, err.error_message
 
     def searchForTargets(self, search_term):
@@ -77,7 +77,7 @@ class Instagram(InputPlugin):
                     urllib.urlretrieve(i.profile_picture, temp_file)
                 possibleTargets.append(target)
             logger.debug(str(len(possibleTargets)) + " possible targets were found matching the search query")
-        except Exception, err:
+        except Exception as err:
             logger.error("Error searching for targets with instagram plugin.")
             logger.error(err)
         return possibleTargets
@@ -128,7 +128,7 @@ class Instagram(InputPlugin):
                         loc['accuracy'] = 'high'
                     locations_list.append(loc)
             logger.debug(str(len(locations_list)) + " photos have been retrieved")
-        except Exception, err:
+        except Exception as err:
             logger.error(err)
             logger.error("Error getting locations from instagram plugin")
         return locations_list
@@ -159,7 +159,7 @@ class Instagram(InputPlugin):
                     loc['accuracy'] = 'high'
                     locations_list.append(loc)
             logger.debug("{0} locations have been retrieved".format(len(locations_list)))
-        except Exception, err:
+        except Exception as err:
             logger.error(err)
             logger.error("Error getting locations from instagram plugin")
         return locations_list, None
@@ -203,21 +203,21 @@ class Instagram(InputPlugin):
                         access_token = api.exchange_code_for_access_token(code=c)
                         self.options_string['hidden_access_token'] = access_token[0]
                         self.saveConfiguration(self.config)
-                    except Exception, err:
+                    except Exception as err:
                         self.showWarning("Error Getting Access Token",
                                          "Please verify that the link you pasted was correct. Try running the wizard again.")
                 else:
                     self.showWarning("Error Getting Access Token",
                                      "Please verify that the link you pasted was correct. Try running the wizard again.")
 
-        except Exception, err:
+        except Exception as err:
             logger.error(err)
             self.showWarning("Error", "Error was {0}".format(err))
 
     def parseRedirectUrl(self, link):
         try:
             return parse_qs(urlparse(link).query)['code'][0]
-        except Exception, err:
+        except Exception as err:
             logger.error(err)
             return None
 

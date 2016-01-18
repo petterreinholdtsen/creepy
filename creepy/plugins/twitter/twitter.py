@@ -40,7 +40,7 @@ class Twitter(InputPlugin):
         labels_config = self.getConfigObj(self.name + '.labels')
         try:
             self.labels = labels_config['labels']
-        except Exception, err:
+        except Exception as err:
             self.labels = None
             logger.error("Could not load the labels file for the  " + self.name + " plugin .")
             logger.error(err)
@@ -74,14 +74,14 @@ class Twitter(InputPlugin):
                     if not os.path.exists(temp_file):
                         urllib.urlretrieve(i.profile_image_url, temp_file)
                     possibleTargets.append(target)
-        except tweepy.TweepError, e:
+        except tweepy.TweepError as e:
             logger.error("Error authenticating with Twitter API.")
             logger.error(e)
             if e.response.status_code == 429:
                 remaining, limit, reset = self.getRateLimitStatus('search_users')
             return False, "Error authenticating with Twitter: {0}. Your limits will be renewed at : {1}".format(
                 e.message, reset.strftime("%Y-%m-%d %H:%M:%S %z"))
-        except Exception, err:
+        except Exception as err:
             logger.error(err)
             logger.error("Error searching for targets in Twitter plugin.")
         return possibleTargets
@@ -93,7 +93,7 @@ class Twitter(InputPlugin):
             auth.set_access_token(self.options_string['hidden_access_token'],
                                   self.options_string['hidden_access_token_secret'])
             return tweepy.API(auth)
-        except Exception, e:
+        except Exception as e:
             logger.error(e)
             return None
 
@@ -141,20 +141,20 @@ class Twitter(InputPlugin):
                     self.options_string['hidden_access_token'] = oAuthHandler.access_token
                     self.options_string['hidden_access_token_secret'] = oAuthHandler.access_token_secret
                     self.saveConfiguration(self.config)
-                except Exception, err:
+                except Exception as err:
                     logger.error(err)
                     self.showWarning("Error completing the wizard",
                                      "We were unable to obtain the access token for your account, please try to run the wizard again. Error was {0}".format(
                                          err.message))
 
-        except Exception, err:
+        except Exception as err:
             logger.error(err)
             self.showWarning('Error completing the wizard', 'Error was: {0}'.format(err.message))
 
     def showWarning(self, title, text):
         try:
             QMessageBox.warning(self.wizard, title, text)
-        except Exception, err:
+        except Exception as err:
             logger.error(err)
 
     def getAuthorizationURL(self):
@@ -169,7 +169,7 @@ class Twitter(InputPlugin):
                                                self.options_string['hidden_application_secret'])
             authorizationURL = oAuthHandler.get_authorization_url(True)
             return authorizationURL
-        except Exception, err:
+        except Exception as err:
             logger.error(err)
             return None
 
@@ -189,11 +189,11 @@ class Twitter(InputPlugin):
                 self.api = tweepy.API(oAuthHandler)
             logger.debug(self.api.me().name)
             return True, ""
-        except tweepy.TweepError, e:
+        except tweepy.TweepError as e:
             logger.error("Error authenticating with Twitter API.")
             logger.error(e)
             return False, "Error authenticating with Twitter. " + e.message
-        except Exception, e:
+        except Exception as e:
             logger.error("Error authenticating with Twitter API.")
             logger.error(e)
             return False, "Error authenticating with Twitter. " + e.reason
@@ -262,7 +262,7 @@ class Twitter(InputPlugin):
                         createdUserTimezone = userTimezone.normalize(createdUtcTimezone.astimezone(userTimezone))
                         timestamps.append(createdUserTimezone)
                         finalDateTimeObj = createdUserTimezone
-                    except Exception, e:
+                    except Exception as e:
                         finalDateTimeObj = createdUtcTimezone
                         timestamps.append(createdUtcTimezone)
                 else:
@@ -319,7 +319,7 @@ class Twitter(InputPlugin):
                 hoursTable = self.createFrequencyTableFromCounter(Counter([d.hour for d in timestamps]), 'Hour',
                                                                   'hoursTable', 24)
                 twitterDiv += hoursTable
-        except tweepy.TweepError, e:
+        except tweepy.TweepError as e:
             logger.error("Error authenticating with Twitter API.")
             logger.error(e)
             if e.response.status_code == 429:
@@ -327,7 +327,7 @@ class Twitter(InputPlugin):
                 logger.error(
                     "Error getting locations from twitter plugin: {0}. Your limits will be renewed at : {1}".format(
                         e.message, reset.strftime("%Y-%m-%d %H:%M:%S %z")))
-        except Exception, e:
+        except Exception as e:
             logger.error(e)
             logger.error("Error getting locations from twitter plugin")
         return locations_list, twitterDiv
@@ -352,7 +352,7 @@ class Twitter(InputPlugin):
                 loc = self.buildLocationFromTweet(i, finalDateTimeObj)
                 if loc:
                     locations_list.append(loc)
-        except tweepy.TweepError, e:
+        except tweepy.TweepError as e:
             logger.error("Error authenticating with Twitter API.")
             logger.error(e)
             if e.response.status_code == 429:
@@ -360,7 +360,7 @@ class Twitter(InputPlugin):
                 logger.error(
                     "Error getting locations from twitter plugin: {0}. Your limits will be renewed at : {1}".format(
                         e.message, reset.strftime("%Y-%m-%d %H:%M:%S %z")))
-        except Exception, e:
+        except Exception as e:
             logger.error(e)
             logger.error("Error getting locations from twitter plugin")
         return locations_list
@@ -386,7 +386,7 @@ class Twitter(InputPlugin):
                 return reply['resources']['users']['/users/search'], reply['resources']['search']['/search/tweets'], \
                        reply['resources']['statuses']['/statuses/user_timeline']
             return remaining, limit, datetime.fromtimestamp(reset)
-        except Exception, e:
+        except Exception as e:
             logger.error(e)
             logger.error("Error getting rate limit status from twitter plugin")
 

@@ -144,7 +144,7 @@ class InputPlugin(IPlugin):
             self.config = self.getConfigObj()
         try:
             options = self.config[category]
-        except Exception, err:
+        except Exception as err:
             options = None 
             logger.error('Could not load the '+category+' for the '+self.name+' plugin .')
             logger.exception(err)
@@ -160,7 +160,7 @@ class InputPlugin(IPlugin):
                         self.config[c][l] = new_config[c][l]
             GeneralUtilities.getLocalPluginDir(self.name)
             self.config.write()
-        except Exception, err:
+        except Exception as err:
             logger.error('Could not save the configuration for the '+self.name+' plugin.')
             logger.exception(err)
 
@@ -169,7 +169,7 @@ class InputPlugin(IPlugin):
             self.config = self.getConfigObj()
         try:
             params = self.config['search_options']
-        except Exception, err:
+        except Exception as err:
             params= None
             logger.error('Could not load the search configuration parameters for the '+self.name+' plugin.')
             logger.exception(err)

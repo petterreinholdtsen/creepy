@@ -42,7 +42,7 @@ class Project(object):
         storedProject = shelve.open(os.path.join(GeneralUtilities.getProjectsDir(), projectName))
         try:
             storedProject['project'] = projectNodeObject
-        except Exception, err:
+        except Exception as err:
             logger.error('Error saving the project ')
             logger.exception(err)
         finally:
@@ -52,6 +52,6 @@ class Project(object):
         # projectName comes as a Unicode, so we need to encode it to a string for shelve to find it
         try:
             os.remove(os.path.join(GeneralUtilities.getProjectsDir(), projectName.encode('utf-8')))
-        except Exception, err:
+        except Exception as err:
             logger.error('Error deleting the project')
             logger.exception(err)
