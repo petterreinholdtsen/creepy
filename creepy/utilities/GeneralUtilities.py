@@ -60,10 +60,23 @@ def getTempDir():
             raise
     return dir
 
+def getLocalPluginDir(pluginname):
+    if os.path.exists("/usr/share/creepy/plugins"):
+        localplugindir = expanduser(os.path.join("~/.creepy/plugins", pluginname))
+        try: os.makedirs(localplugindir)
+        except OSError as e:
+            if e.errno == errno.EEXIST and os.path.isdir(localplugindir): pass
+            else: raise
+        return localplugindir
+    else:
+        return [os.path.join(os.getcwd(), 'plugins')]
+
 def getPluginDirs():
     if os.path.exists("/usr/share/creepy/plugins"):
         # if creepy is installed via debian package
-        return ["/usr/share/creepy/plugins", os.path.join(os.getcwd(), 'plugins')]
+        return [os.path.join(os.getcwd(), 'plugins'),
+                "/usr/share/creepy/plugins",
+                '~/.creepy/plugins']
     else:
         return [os.path.join(os.getcwd(), 'plugins')]
 
