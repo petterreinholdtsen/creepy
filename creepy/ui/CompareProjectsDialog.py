@@ -82,5 +82,3 @@ class Ui_compareProjectsDialog(object):
         self.titleLabel.setText(_translate("compareProjectsDialog", "<html><head/><body><p><span style=\" font-size:9pt;\">Select the two projects you want to compare</span></p></body></html>", None))
         self.firstProjectLabel.setText(_translate("compareProjectsDialog", "<html><head/><body><p><span style=\" font-weight:600;\">Project A</span></p></body></html>", None))
         self.secondProjectLabel.setText(_translate("compareProjectsDialog", "<html><head/><body><p><span style=\" font-weight:600;\">Project B</span></p></body></html>", None))
-
-import creepy_resources_rc

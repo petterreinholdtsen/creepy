@@ -13,7 +13,8 @@ def getUserHome():
 
 def getIncludeDir():
     """ Provide path to include directory.  Change this for installed packages """
-    incdir = os.path.join(os.getcwdu(), 'include')
+    incdir = os.path.join(os.getcwd(), 'include')
+    print(incdir)
     if os.path.isdir(incdir):
         return incdir
     else:

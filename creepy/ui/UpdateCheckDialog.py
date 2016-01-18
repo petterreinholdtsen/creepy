@@ -79,8 +79,6 @@ class Ui_UpdateCheckDialog(object):
         self.versionsTableWidget.setSortingEnabled(False)
         self.versionsTableWidget.setSortingEnabled(__sortingEnabled)
 
-import creepy_resources_rc
-
 if __name__ == "__main__":
     import sys
     app = QtGui.QApplication(sys.argv)

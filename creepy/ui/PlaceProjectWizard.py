@@ -193,7 +193,6 @@ class Ui_placeProjectWizard(object):
         self.placeProjectWizardPage5.setSubTitle(_translate("placeProjectWizard", "Click Finish to save the Project Configuration ", None))
 
 from PyQt4 import QtWebKit
-import creepy_resources_rc
 
 if __name__ == "__main__":
     import sys

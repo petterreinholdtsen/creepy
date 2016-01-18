@@ -46,8 +46,6 @@ class Ui_PluginsConfigurationDialog(object):
     def retranslateUi(self, PluginsConfigurationDialog):
         PluginsConfigurationDialog.setWindowTitle(QtGui.QApplication.translate("PluginsConfigurationDialog", "Plugins Configuration", None, QtGui.QApplication.UnicodeUTF8))
 
-import creepy_resources_rc
-
 if __name__ == "__main__":
     import sys
     app = QtGui.QApplication(sys.argv)

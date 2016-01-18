@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import os
+from PyQt4 import QtCore
 from PyQt4.QtGui import QWizard, QMessageBox, QWidget, QScrollArea, QLineEdit, QLabel, QVBoxLayout, QCheckBox, \
     QGridLayout
-from PyQt4.QtCore import QString
 from models.PluginConfigurationListModel import PluginConfigurationListModel
 from models.ProjectWizardPossibleTargetsTable import ProjectWizardPossibleTargetsTable
 from models.InputPlugin import InputPlugin
@@ -12,7 +12,7 @@ from ui.PersonProjectWizard import Ui_personProjectWizard
 from utilities import GeneralUtilities
 
 try:
-    _fromUtf8 = QString.fromUtf8
+    _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
     _fromUtf8 = lambda s: s
 

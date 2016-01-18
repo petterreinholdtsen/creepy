@@ -92,5 +92,3 @@ class Ui_FilterLocationsDateDialog(object):
         self.startDateLabel.setText(_translate("FilterLocationsDateDialog", "<b>Start Date</b>", None))
         self.endDateLabel.setText(_translate("FilterLocationsDateDialog", "<b>End Date</b>", None))
         self.startDateTimeEdit.setDisplayFormat(_translate("FilterLocationsDateDialog", "hh:mm:ss AP", None))
-
-import creepy_resources_rc

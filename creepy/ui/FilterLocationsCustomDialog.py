@@ -98,5 +98,3 @@ class Ui_FilterLocationsCustomDialog(object):
         self.hoursOfDayLabel.setText(_translate("FilterLocationsCustomDialog", "<html><head/><body><p><span style=\" font-weight:600;\">Hours in the day</span></p></body></html>", None))
         self.daysOfWeekLabel.setText(_translate("FilterLocationsCustomDialog", "<html><head/><body><p><span style=\" font-weight:600;\">Days of the week</span></p></body></html>", None))
         self.monthsOfYearLabel.setText(_translate("FilterLocationsCustomDialog", "<html><head/><body><p><span style=\" font-weight:600;\">Months of the year</span></p></body></html>", None))
-
-import creepy_resources_rc

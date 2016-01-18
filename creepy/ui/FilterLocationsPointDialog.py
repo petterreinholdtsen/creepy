@@ -88,7 +88,6 @@ class Ui_FilteLocationsPointDialog(object):
         self.radiusLabel.setText(QtGui.QApplication.translate("FilteLocationsPointDialog", "<html><head/><body><p><span style=\" font-size:9pt;\">Distance from the POI :</span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
 
 from PyQt4 import QtWebKit
-import creepy_resources_rc
 
 if __name__ == "__main__":
     import sys

@@ -7,12 +7,13 @@ import os
 import logging
 import shelve
 import functools
-import urllib2
+import urllib3
 import webbrowser
 import pytz
 from components import creepy_resources_compiled
 from distutils.version import StrictVersion
-from PyQt4.QtCore import QString, QThread, SIGNAL, QUrl, QDateTime, QDate, QRect, Qt
+from PyQt4.QtCore import QThread, SIGNAL, QUrl, QDateTime, QDate, QRect, Qt
+from PyQt4 import QtCore
 from PyQt4.QtGui import QMainWindow, QApplication, QMessageBox, QFileDialog, QWidget, QScrollArea, QVBoxLayout, QIcon, \
     QTableWidgetItem, QAbstractItemView
 from PyQt4.QtGui import QHBoxLayout, QLabel, QLineEdit, QCheckBox, QPushButton, QStackedWidget, QGridLayout, QMenu, \
@@ -55,10 +56,10 @@ guiLoggingHandler.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(guiLoggingHandler)
 # Capture stderr and stdout to a file
-sys.stdout = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stdout.log'), 'w')
-sys.stderr = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stderr.log'), 'w')
+#sys.stdout = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stdout.log'), 'w')
+#sys.stderr = open(os.path.join(GeneralUtilities.getLogDir(), 'creepy_stderr.log'), 'w')
 try:
-    _fromUtf8 = QString.fromUtf8
+    _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
     _fromUtf8 = lambda s: s
 
@@ -184,6 +185,7 @@ class MainWindow(QMainWindow):
         # default to showing the map
         self.changeMainWidgetPage('map')
         self.loadProjectsFromStorage()
+        print("Done loading")
 
     def checkForUpdatedVersion(self):
         """
@@ -229,8 +231,8 @@ class MainWindow(QMainWindow):
         filterLocationsPointDialog.ui.mapPage.mainFrame().addToJavaScriptWindowObject('myPyObj', myPyObj)
         filterLocationsPointDialog.ui.mapPage.mainFrame().setUrl(
             QUrl(os.path.join(GeneralUtilities.getIncludeDir(), 'mapSetPoint.html')))
-        filterLocationsPointDialog.ui.radiusUnitComboBox.insertItem(0, QString('km'))
-        filterLocationsPointDialog.ui.radiusUnitComboBox.insertItem(1, QString('m'))
+        filterLocationsPointDialog.ui.radiusUnitComboBox.insertItem(0, QtCore.QString('km'))
+        filterLocationsPointDialog.ui.radiusUnitComboBox.insertItem(1, QtCore.QString('m'))
         filterLocationsPointDialog.ui.radiusUnitComboBox.activated[str].connect(
             filterLocationsPointDialog.onUnitChanged)
         filterLocationsPointDialog.ui.webView.setPage(filterLocationsPointDialog.ui.mapPage)
@@ -370,22 +372,22 @@ class MainWindow(QMainWindow):
         mapFrame.evaluateJavaScript('showMarkers()')
 
     def addMarkerToMap(self, mapFrame, location):
-        mapFrame.evaluateJavaScript(QString('addMarker(' + str(location.latitude) + ',' + str(location.longitude) +
+        mapFrame.evaluateJavaScript(QtCore.QString('addMarker(' + str(location.latitude) + ',' + str(location.longitude) +
                                             ',\"' + location.infowindow + '\",\"' + location.plugin + '\",\"' +
                                             location.accuracy + '\")'))
 
     def refreshMap(self, mapFrame):
-        mapFrame.evaluateJavaScript(QString('refreshMap()'))
+        mapFrame.evaluateJavaScript(QtCore.QString('refreshMap()'))
 
     def centerMap(self, mapFrame, location):
         mapFrame.evaluateJavaScript(
-            QString('centerMap(' + str(location.latitude) + ',' + str(location.longitude) + ')'))
+            QtCore.QString('centerMap(' + str(location.latitude) + ',' + str(location.longitude) + ')'))
 
     def setMapZoom(self, mapFrame, level):
-        mapFrame.evaluateJavaScript(QString('setZoom(' + str(level) + ')'))
+        mapFrame.evaluateJavaScript(QtCore.QString('setZoom(' + str(level) + ')'))
 
     def clearMarkers(self, mapFrame):
-        mapFrame.evaluateJavaScript(QString('clearMarkers()'))
+        mapFrame.evaluateJavaScript(QtCore.QString('clearMarkers()'))
 
     def linkClicked(self, link):
         webbrowser.open(link.toEncoded(), new=1)
@@ -564,7 +566,7 @@ class MainWindow(QMainWindow):
             else:
                 analysisDocument = self.currentProject.analysisDocument
         analysisFrame = self.ui.analysisWebPage.mainFrame()
-        analysisFrame.setHtml(QString(unicode(analysisDocument)),
+        analysisFrame.setHtml(QtCore.QString(unicode(analysisDocument)),
                               QUrl('file://' + os.path.join(os.getcwd(), 'include/')))
 
     def presentLocations(self, locations):
@@ -805,7 +807,7 @@ class MainWindow(QMainWindow):
         """
         def searchForPlace():
             placeProjectWizard.ui.mapPage.mainFrame().evaluateJavaScript(
-                QString('searchForAddress(\"'+unicode(placeProjectWizard.ui.searchAddressInput.text().toUtf8(), 'utf-8')+'\");'))
+                QtCore.QString('searchForAddress(\"'+unicode(placeProjectWizard.ui.searchAddressInput.text().toUtf8(), 'utf-8')+'\");'))
         placeProjectWizard = PlaceProjectWizard()
         placeProjectWizard.ProjectWizardPluginListModel = ProjectWizardPluginListModel(
             placeProjectWizard.loadConfiguredPlugins(), self)
@@ -816,8 +818,8 @@ class MainWindow(QMainWindow):
         placeProjectWizard.ui.mapPage.mainFrame().addToJavaScriptWindowObject('myPyObj', placeProjectWizard.myPyObj)
         placeProjectWizard.ui.mapPage.mainFrame().setUrl(
             QUrl(os.path.join(GeneralUtilities.getIncludeDir(), 'mapSetPoint.html')))
-        placeProjectWizard.ui.radiusUnitComboBox.insertItem(0, QString('km'))
-        placeProjectWizard.ui.radiusUnitComboBox.insertItem(1, QString('m'))
+        placeProjectWizard.ui.radiusUnitComboBox.insertItem(0, QtCore.QString('km'))
+        placeProjectWizard.ui.radiusUnitComboBox.insertItem(1, QtCore.QString('m'))
         placeProjectWizard.ui.radiusUnitComboBox.activated[str].connect(
             placeProjectWizard.onUnitChanged)
         placeProjectWizard.ui.searchAddressButton.clicked.connect(searchForPlace)
@@ -931,4 +933,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     myapp = MainWindow()
     myapp.show()
+    print("ended")
     sys.exit(app.exec_())

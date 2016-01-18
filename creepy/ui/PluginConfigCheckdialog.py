@@ -55,8 +55,6 @@ class Ui_checkPluginConfigurationDialog(object):
         checkPluginConfigurationDialog.setWindowTitle(QtGui.QApplication.translate("checkPluginConfigurationDialog", "Plugin Configuration Test", None, QtGui.QApplication.UnicodeUTF8))
         self.checkPluginConfigurationResultLabel.setText(QtGui.QApplication.translate("checkPluginConfigurationDialog", "TextLabel", None, QtGui.QApplication.UnicodeUTF8))
 
-import creepy_resources_rc
-
 if __name__ == "__main__":
     import sys
     app = QtGui.QApplication(sys.argv)

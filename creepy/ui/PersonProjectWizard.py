@@ -212,8 +212,6 @@ class Ui_personProjectWizard(object):
         self.personProjectWizardPage4.setTitle(QtGui.QApplication.translate("personProjectWizard", "Step 4  - Finalize Project", None, QtGui.QApplication.UnicodeUTF8))
         self.personProjectWizardPage4.setSubTitle(QtGui.QApplication.translate("personProjectWizard", "Click Finish to save the Project Configuration ", None, QtGui.QApplication.UnicodeUTF8))
 
-import creepy_resources_rc
-
 if __name__ == "__main__":
     import sys
     app = QtGui.QApplication(sys.argv)

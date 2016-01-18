@@ -48,8 +48,6 @@ class Ui_verifyDeleteDialog(object):
         verifyDeleteDialog.setWindowTitle(QtGui.QApplication.translate("verifyDeleteDialog", "Delete Project", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("verifyDeleteDialog", "<html><head/><body><p align=\"center\"><span style=\" font-size:10pt;\">Are you sure you want to </span><span style=\" font-size:10pt; font-weight:600; font-style:italic; color:#ff0000;\">delete</span><span style=\" font-size:10pt;\"> project </span></p><p align=\"center\"><span style=\" font-size:10pt; font-weight:600;\">@project@</span><span style=\" font-size:10pt;\"> ? </span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
 
-import creepy_resources_rc
-
 if __name__ == "__main__":
     import sys
     app = QtGui.QApplication(sys.argv)

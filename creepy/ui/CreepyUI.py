@@ -473,7 +473,6 @@ class Ui_CreepyMainWindow(object):
         self.actionFilterInaccurateLocations.setText(_translate("CreepyMainWindow", "Filter Inaccurate Locations", None))
 
 from PyQt4 import QtWebKit
-import creepy_resources_rc
 
 if __name__ == "__main__":
     import sys
